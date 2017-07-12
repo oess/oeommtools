@@ -1,7 +1,3 @@
-[![Anaconda Badge](https://anaconda.org/nividic/lomap/badges/version.svg)](https://anaconda.org/nividic/lomap)
-
-[![Build Status](https://travis-ci.org/MobleyLab/Lomap.svg?branch=master)](https://travis-ci.org/MobleyLab/Lomap)
-
 
 
 # OEOMMTools

@@ -32,15 +32,16 @@ install:
 - pip install -i ${OPENEYE_CHANNEL} OpenEye-toolkits && python -c "import openeye; print(openeye.__version__)"
 
 script:
-- conda create -n _openeye python=$python
-- source activate _openeye
+- conda create -n openeye python=$python
+- source activate openeye
 - conda config --add channels ${ORGNAME}
 - conda build devtools/conda-recipe
 - conda install --use-local ${PACKAGENAME}
+- conda install nose nose-timer
 - conda list
-# Test
+# Tests
 - ls
-- py.test -v -s tests
+- nosetests tests/test_funcs.py
 
 
 

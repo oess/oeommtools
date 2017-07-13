@@ -2,9 +2,6 @@ dist: trusty
 sudo: true
 language: python
 
-compiler:
-- gcc-4.9
-
 python:
 - 3.5
 

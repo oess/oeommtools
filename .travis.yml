@@ -37,10 +37,8 @@ script:
 - conda create --yes -n openeye python=$python
 - source activate openeye
 - conda install --use-local oeommtools --yes
-
-
 # Test
-#- py.test -v -s tests
+- py.test -v -s tests
 
 
 

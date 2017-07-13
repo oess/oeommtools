@@ -34,10 +34,9 @@ script:
 - conda install conda-build --yes
 - conda config --add channels ${ORGNAME}
 - conda build devtools/conda-recipe
-- conda create --yes -n openeye python=$python
-- source activate openeye
+- conda create -n _openeye python=$python --yes
+- source activate _openeye
 - conda install --use-local oeommtools --yes
-- ls
 - conda list
 # Test
 - py.test -v -s tests

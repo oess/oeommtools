@@ -14,6 +14,7 @@ env:
     - CONDA_PY=35  OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
   global:
     - ORGNAME="omnia"
+    - PACKAGENAME="oeommtools"
     - OE_LICENSE="$HOME/oe_license.txt"
 
 before_install:
@@ -30,13 +31,13 @@ install:
 - pip install -i https://pypi.anaconda.org/OpenEye/simple OpenEye-toolkits
 
 script:
-# Add omnia channel
 - conda config --add channels ${ORGNAME}
-# Build conda dev package
 - conda build devtools/conda-recipe
-# Create and activate openeye environment
 - conda create --yes -n openeye python=$python
 - source activate openeye
+- conda install --use-local oeommtools --yes
+
+
 # Test
 #- py.test -v -s tests
 

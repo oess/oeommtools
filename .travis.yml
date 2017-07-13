@@ -11,7 +11,8 @@ env:
 - secure: "TM/X6WgV9LQ4ooIc1NOxxulk69RYZlUoT7WsuYrEyA6SUqk1Kv80/3HOoNdhLi/fRiFzyoh/DnjIBwiRLEFkVTHg7s5dmXU7JWdANSczB/dUo7hSCpk5jUlQZM1CQ3tBEt8pYTNxijDpEbQFBIzDSvOSkwz+niG9v04KH23ZvOO7LQ+r3TWPTRF++gYcIhgYwI4gPaB0Zd/EtFUtk+vphidOBFqwPkrIcNw8OUtfXqQI4u3qKIasnXFsoqIEeZPhe10089pwwM1QtESKc+KJst2bV5J28+0s2+nJlHTnm6GUOy0cdJ45lsxuDPz/tSavSF6nBaNDexSrebhHPnIk7m3ngDGdQXpdW/yZ73/eaiP3kl7k4p6Lf6Bm3DdQhPjJj+Hg13LWSbgnK/xu6YWvef3hVxEKYdVrRHV6FRpHAw3/ZcBs9/lipKV6ziP5Dp5/BuP5ll3Df/+PfK6oKEQiszHTaI6C+W88IQ4JDj7josJ5QVxP/Fg45Fy98OPSxBq2+dNIjjp+ZEr40wbDYXI19MV/K1BjZ1adMGFulHgq+NvXz4pA8bsFgmXr0/YbT8xVyXwuRhBxyHYuamQe3BUJApBIbyWbOucZGLdtPBCLevA0eb4fyAf+93VsuIXYuUdF7lGvd6905ob9+NUhl0TezMWwtQ9fJVE5LevGYdhPbRM="
 
 before_install:
-- openssl aes-256-cbc -K $encrypted_bf8b0267ba78_key -iv $encrypted_bf8b0267ba78_iv -in oe_license.txt.enc -out oe_license.txt -d
+
+- openssl aes-256-cbc -K $encrypted_b67118b96bf1_key -iv $encrypted_b67118b96bf1_iv -in oe_license.txt.enc -out oe_license.txt -d
 - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
 - bash miniconda.sh -b -p $HOME/miniconda
 - export PATH=$HOME/miniconda/bin:$PATH

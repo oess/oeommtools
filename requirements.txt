@@ -1,7 +1,0 @@
-# OE Stack
-openeye-toolkits
-openeye-floe==0.2.158
-
-# Dev Stack
-invoke
-pytest

@@ -37,6 +37,8 @@ script:
 - conda create --yes -n openeye python=$python
 - source activate openeye
 - conda install --use-local oeommtools --yes
+- ls
+- conda list
 # Test
 - py.test -v -s tests
 

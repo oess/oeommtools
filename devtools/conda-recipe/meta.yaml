@@ -12,16 +12,26 @@ build:
 requirements:
   build:
     - python
+    - pytest
     - setuptools
     - numpy
     - numpydoc
-    - openmm ==7.0.1
+    - openmm
   run:
     - python
+    - pytest
     - setuptools
     - numpy
     - numpydoc
     - openmm
 
+test:
+  requires:
+    - pytest
+  imports:
+    - oeommtools
+
+
 about:
   home: https://github.com/oess/oeommtools
+  license_file: LICENSE.txt

@@ -29,19 +29,17 @@ before_install:
 - conda info -a
 
 install:
-- pip install -i ${OPENEYE_CHANNEL} OpenEye-toolkits && python -c "import openeye; print(openeye.__version__)"
-
-script:
 - conda create -n openeye python=$python
 - source activate openeye
+- pip install -i ${OPENEYE_CHANNEL} OpenEye-toolkits && python -c "import openeye; print(openeye.__version__)"
 - conda config --add channels ${ORGNAME}
-- conda build devtools/conda-recipe
+- conda build --python $python devtools/conda-recipe
 - conda install --use-local ${PACKAGENAME}
-- conda install nose nose-timer
 - conda list
-# Tests
 - ls
-- nosetests tests/test_funcs.py
+
+script:
+- py.test -s -v tests
 
 
 

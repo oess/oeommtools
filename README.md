@@ -1,4 +1,4 @@
-
+[![Build Status](https://travis-ci.org/oess/oeommtools.svg?branch=master)](https://travis-ci.org/oess/oeommtools)
 
 # OEOMMTools
 These are a collection of tools developed to integrate and mix

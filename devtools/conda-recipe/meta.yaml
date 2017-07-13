@@ -15,7 +15,7 @@ requirements:
     - setuptools
     - numpy
     - numpydoc
-    - openmm ==7.1.0
+    - openmm ==7.0.1
   run:
     - python
     - setuptools

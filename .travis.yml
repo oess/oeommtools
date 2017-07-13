@@ -39,6 +39,7 @@ script:
 - conda install --use-local oeommtools --yes
 - conda list
 # Test
+- ls
 - py.test -v -s tests
 
 

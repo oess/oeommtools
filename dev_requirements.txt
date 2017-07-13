@@ -1,0 +1,8 @@
+# Normal requirements
+-r requirements.txt
+
+# Dev requirements
+pytest
+
+# Local Dev Setup
+-e .

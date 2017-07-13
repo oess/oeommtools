@@ -242,8 +242,9 @@ def check_shell(core_mol, check_mol, cutoff):
     core_mol: OEMol molecule
         The core molecule
     check_mol: OEMol molecule
-        The molecule to be checked if inside or outside a shell of
-        cutoff threshold
+        The molecule to be checked if inside or outside a shell
+        surrounding the core_mole with radius equal to the cutoff
+        threshold
     cut_off: python float number
         The threshold distance in A used to mark atom inside or outside
         the shell
@@ -251,8 +252,8 @@ def check_shell(core_mol, check_mol, cutoff):
     Return:
     -------
     in_out: python boolean
-         True if at least one of check_mol atom distance is less than
-          the selected cutoff
+         True if at least one of check_mol atom distance from core_mole
+         is less than the selected cutoff threshold
     """
 
     # Create a OE bit vector mask for each atoms of the
@@ -283,10 +284,12 @@ def check_shell(core_mol, check_mol, cutoff):
 def sanitizeOEMolecule(molecule):
     """
     This function checks if the molecule has coordinates,
-    explicit hydrogens and aromaticity. If the molecule
-    does not have coordinates a fatal error is raised.
-    If the molecule does not have hydrogens or aramatic
-    flags are missing then a copy of the molecule is fixed
+    explicit hydrogens, aromaticity missing and not unique
+    atom names. If the molecule does not have coordinates
+    a fatal error is raised. If the molecule does not have
+    hydrogens or aramatic flags are missing then a copy of
+    the molecule is fixed, if missing or not unique atom
+    names are found then a copy of the molecule is fixed
 
     Parameters:
     -----------
@@ -296,8 +299,8 @@ def sanitizeOEMolecule(molecule):
     Return:
     -------
     mol_copy: OEMol
-        A copy of the checked molecule with fixed aromaticity
-        and hydrogens
+        A copy of the checked molecule with fixed aromaticity,
+        hydrogens and unique atom names if they are missing
     """
     mol_copy = molecule.CreateCopy()
 
@@ -311,5 +314,23 @@ def sanitizeOEMolecule(molecule):
     if not mol_copy.HasPerceived(oechem.OEPerceived_Aromaticity):
         oechem.OEAssignAromaticFlags(mol_copy, oechem.OEAroModelOpenEye)
 
-    # TEMPORARY PATCH FOR SMIRNOFF
-    oechem.OETriposAtomNames(mol_copy)
+    # Check for any missing and not unique atom names.
+    # If found reassign all of them as Tripos atom names
+
+    atm_list_names = []
+
+    for atom in mol_copy.GetAtoms():
+        atm_list_names.append(atom.GetName())
+
+    reassign_names = False
+
+    if len(set(atm_list_names) != len(atm_list_names)):
+        reassign_names = True
+
+    if '' in atm_list_names:
+        reassign_names = True
+
+    if reassign_names:
+        oechem.OETriposAtomNames(mol_copy)
+
+    return mol_copy

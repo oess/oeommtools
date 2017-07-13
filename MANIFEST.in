@@ -1,6 +1,3 @@
-recursive-include test  *
-
-include MANIFEST.in
 include README.md
-include LICENCE.txt
-
+include LICENCE
+recursive-include test  *

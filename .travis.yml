@@ -1,0 +1,48 @@
+dist: trusty
+sudo: true
+language: python
+
+python:
+- 3.5
+
+branches:
+    only:
+        - master
+
+env:
+  
+  matrix:
+    - python=3.5 CONDA_PY=35 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
+    
+  global:
+    - ORGNAME="omnia"
+    - PACKAGENAME="oeommtools"
+    - OE_LICENSE="$HOME/oe_license.txt"
+    
+
+before_install:
+- openssl aes-256-cbc -K $encrypted_b67118b96bf1_key -iv $encrypted_b67118b96bf1_iv -in oe_license.txt.enc -out oe_license.txt -d
+- wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+- bash miniconda.sh -b -p $HOME/miniconda
+- export PATH=$HOME/miniconda/bin:$PATH
+- hash -r
+- conda config --set always_yes true --set changeps1 no
+- conda update --yes -q conda
+- conda install conda-build
+- conda info -a
+
+install:
+- conda create -n openeye python=$python
+- source activate openeye
+- pip install -i ${OPENEYE_CHANNEL} openeye-toolkits-python3-ubuntu-14.04-x64 && python -c "import openeye; print(openeye.__version__)"
+- conda config --add channels ${ORGNAME}
+- conda build --python $python devtools/conda-recipe
+- conda install --use-local ${PACKAGENAME}
+- conda list
+
+script:
+- py.test -s -v tests
+
+
+
+

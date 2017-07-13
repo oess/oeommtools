@@ -31,12 +31,11 @@ before_install:
 install:
 - conda create -n openeye python=$python
 - source activate openeye
-- pip install -i ${OPENEYE_CHANNEL} OpenEye-toolkits && python -c "import openeye; print(openeye.__version__)"
+- pip install -i ${OPENEYE_CHANNEL} openeye-toolkits && python -c "import openeye; print(openeye.__version__)"
 - conda config --add channels ${ORGNAME}
 - conda build --python $python devtools/conda-recipe
 - conda install --use-local ${PACKAGENAME}
 - conda list
-- ls
 
 script:
 - py.test -s -v tests

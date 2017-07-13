@@ -1,0 +1,27 @@
+package:
+  name: oeommtools
+  version: 0.0.0
+
+source:
+  path: ../../
+
+build:
+  preserve_egg_dir: True
+  number: 0
+
+requirements:
+  build:
+    - python
+    - setuptools
+    - numpy
+    - numpydoc
+    - openmm
+  run:
+    - python
+    - setuptools
+    - numpy
+    - numpydoc
+    - openmm
+
+about:
+  home: https://github.com/oess/oeommtools

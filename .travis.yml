@@ -1,4 +1,4 @@
-dist: xenial
+dist: trusty
 sudo: false
 language: python
 
@@ -12,7 +12,8 @@ branches:
 env:
   
   matrix:
-    - python=3.5 CONDA_PY=35 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
+    - python=3.5 CONDA_PY=35 OPENEYE_CHANNEL="https://pypi.anaconda.org/openeye/label/beta/simple"
+    
   global:
     - ORGNAME="omnia"
     - PACKAGENAME="oeommtools"

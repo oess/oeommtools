@@ -11,7 +11,7 @@ branches:
 
 env:
   matrix:
-    - CONDA_PY=35  OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
+    - python=3.5 CONDA_PY=35 OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
   global:
     - ORGNAME="omnia"
     - PACKAGENAME="oeommtools"
@@ -31,6 +31,7 @@ install:
 - pip install -i https://pypi.anaconda.org/OpenEye/simple OpenEye-toolkits
 
 script:
+- conda install conda-build --yes
 - conda config --add channels ${ORGNAME}
 - conda build devtools/conda-recipe
 - conda create --yes -n openeye python=$python

@@ -12,7 +12,7 @@ branches:
 env:
   
   matrix:
-    - python=3.5 CONDA_PY=35 OPENEYE_CHANNEL="https://pypi.anaconda.org/openeye/label/beta/simple"
+    - python=3.5 CONDA_PY=35 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
     
   global:
     - ORGNAME="omnia"

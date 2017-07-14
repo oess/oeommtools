@@ -46,6 +46,9 @@ script:
 
 after_success:
   - source deactivate
-  - test $TRAVIS_BRANCH = "master" && conda install conda-build && conda install anaconda-client && bash devtools/anaconda/conda_upload.sh
+  - test $TRAVIS_BRANCH = "master"
+  - conda install conda-build
+  - conda install anaconda-client
+  - bash devtools/anaconda/conda_upload.sh
 
 

@@ -45,6 +45,6 @@ script:
   - py.test -s -v tests
 
 after_success:
-  - test $TRAVIS_BRANCH = "master" && conda install conda-build && conda install anaconda-client && bash ${DEV_TOOLS}/conda_upload.sh
+  - test $TRAVIS_BRANCH = "master" && conda install conda-build && conda install anaconda-client && bash devtools/anaconda/conda_upload.sh
 
 

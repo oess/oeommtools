@@ -51,5 +51,5 @@ script:
 
 after_success:
   - source deactivate
-  - anaconda -t $CONDA_UPLOAD_TOKEN remove --force $USER/$PKG_NAME/$VERSION*
+  - anaconda -t $CONDA_UPLOAD_TOKEN remove --force $USER/$PKG_NAME/$VERSION
   - anaconda -t $CONDA_UPLOAD_TOKEN upload -u $USER -l main $HOME/miniconda/conda-bld/$OS/$PKG_NAME-*.tar.bz2 --force

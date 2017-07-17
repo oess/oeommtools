@@ -8,9 +8,9 @@ matrix:
       python: 3.5
       env: python=3.5 CONDA_PY=35 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
     - os: osx
-       python: 3.5
-       sudo: required
-       env: python=3.5 CONDA_PY=35 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
+      python: 3.5
+      sudo: required
+      env: python=3.5 CONDA_PY=35 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
 
 branches:
     only:

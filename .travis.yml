@@ -30,6 +30,7 @@ before_install:
   - conda config --set always_yes true --set changeps1 no
   - conda update --yes -q conda
   - conda install conda-build
+  - conda install anaconda-client
   - conda info -a
 
 install:
@@ -47,8 +48,4 @@ script:
 after_success:
   - source deactivate
   - test $TRAVIS_BRANCH = "master"
-  - conda install conda-build
-  - conda install anaconda-client
   - bash devtools/anaconda/conda_upload.sh
-
-

@@ -1,20 +1,17 @@
+dist: trusty
+sudo: true
 language: python
 
-matrix:
-  include:
-    - os: linux
-      dist: trusty
-      sudo: required
-      python: 3.5
-      env: python=3.5 CONDA_PY=35 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
-    - os: osx
-      python: 3.5
-      sudo: required
-      env: python=3.5 CONDA_PY=35 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
+python:
+  - 3.5
 
 branches:
     only:
         - master
+
+env:
+  matrix:
+    - python=3.5 CONDA_PY=35 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
 
   global:
     - ORGNAME="omnia"
@@ -25,7 +22,6 @@ branches:
     - PKG_NAME="oeommtools"
     - USER="nividic"
     - OS=$TRAVIS_OS_NAME-64
-
 
 before_install:
   - openssl aes-256-cbc -K $encrypted_b67118b96bf1_key -iv $encrypted_b67118b96bf1_iv -in oe_license.txt.enc -out oe_license.txt -d

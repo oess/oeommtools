@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/oess/oeommtools.svg?branch=master)](https://travis-ci.org/oess/oeommtools)
 
+[![Anaconda Badge](https://anaconda.org/nividic/oeommtools/badges/version.svg)](https://anaconda.org/nividic/oeommtools/badges/version.svg)
+
 # OEOMMTools
 These are a collection of tools developed to integrate and mix
 the OE Toolkit with the OpenMM API
@@ -15,24 +17,7 @@ Authors
 
 ## Installation
 
-Add to the conda channels:
-
-conda config --add channels nividic
-
-and then:
-
-conda install oeommtools
-
-or
-
-Add to the conda channels:
-
-conda config --add channels nividic
-
-and then:
-
-conda install oeommtools
-
+conda install -c nividic -c omnia oeommtools
 
 Usage
 -----
@@ -42,11 +27,9 @@ import oeommtools
 
 ```
 
-
-
 ## Issues
-* OeOmmTools is in debugging stage and it has been tested on Ubuntu 14.04 and OSX Yosemite
-* OeOmmTools has been developed in python 3.4
+* OeOmmTools is in debugging stage and it has been tested on Ubuntu 16.04 and Mac OSX Sierra
+* OeOmmTools has been developed in python 3.5
 
 ## Disclaimers
 * This code is currently in alpha release status. Use at your own risk. We will almost certainly be making changes to the API in the near future.

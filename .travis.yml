@@ -19,6 +19,9 @@ env:
     - PACKAGENAME="oeommtools"
     - OE_LICENSE="$HOME/oe_license.txt"
     - DEV_TOOLS="devtools/conda-recipe"
+    - PKG_NAME="oeommtools"
+    - USER="nividic"
+    - OS=$TRAVIS_OS_NAME-64
     
 
 before_install:
@@ -47,5 +50,4 @@ script:
 
 after_success:
   - source deactivate
-  - test $TRAVIS_BRANCH = "master"
-  - bash devtools/anaconda/conda_upload.sh
+  - anaconda -t $CONDA_UPLOAD_TOKEN upload -u $USER -l main $HOME/miniconda/$OS/$PKG_NAME-*.tar.bz2 --force

@@ -1,6 +1,6 @@
 package:
   name: oeommtools
-  version: 0.0.0
+  version: {{ environ['VERSION'] }}
 
 source:
   path: ../../

@@ -324,7 +324,7 @@ def sanitizeOEMolecule(molecule):
 
     reassign_names = False
 
-    if len(set(atm_list_names) != len(atm_list_names)):
+    if len(set(atm_list_names)) != len(atm_list_names):
         reassign_names = True
 
     if '' in atm_list_names:

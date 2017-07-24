@@ -32,7 +32,7 @@ def oemol_to_openmmTop(mol):
         generated topology in Angstrom units
     """
     # OE Hierarchical molecule view
-    hv = oechem.OEHierView(mol, oechem.OEAssumption_BondedResidue + oechem.OEAssumption_ResPerceived)
+    hv = oechem.OEHierView(mol, oechem.OEAssumption_BondedResidue + oechem.OEAssumption_ResPerceived + oechem.OEAssumption_PDBOrder)
 
     # Create empty OpenMM Topology
     topology = app.Topology()

@@ -1,4 +1,4 @@
-from openeye import oechem
+from openeye import oechem, oequacpac
 from simtk.openmm import app
 from simtk.openmm import Vec3
 from simtk import unit

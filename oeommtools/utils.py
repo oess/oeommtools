@@ -95,7 +95,7 @@ def oemol_to_openmmTop(mol):
     return topology, positions
 
 
-def openmmTop_to_oemol(topology, positions):
+def openmmTop_to_oemol(topology, positions, verbose=True):
     """
     This function converts an OpenMM topology in an OEMol
 
@@ -106,7 +106,8 @@ def openmmTop_to_oemol(topology, positions):
     positions : OpenMM Quantity
         The molecule atom positions associated with the
         topology
-
+    verbose: Bool
+        print or not information
 
     Return:
     -------
@@ -173,7 +174,8 @@ def openmmTop_to_oemol(topology, positions):
 
         # If bond order info are not present set the bond order to one
         if not bond_order:
-            print("WARNING: Bond order info missing between atom indexes: {}-{}".format(at0.index, at1.index))
+            if verbose:
+                print("WARNING: Bond order info missing between atom indexes: {}-{}".format(at0.index, at1.index))
             bond_order = 1
 
         # OE atoms

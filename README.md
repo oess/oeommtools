@@ -28,7 +28,7 @@ import oeommtools
 ```
 
 ## Issues
-* OeOmmTools is in debugging stage and it has been tested on Ubuntu 16.04 and Mac OSX Sierra
+* OEOmmTools is in debugging stage and it has been tested on Ubuntu 16.04 and Mac OSX Sierra
 * OeOmmTools has been developed in python 3.5
 
 ## Disclaimers

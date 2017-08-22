@@ -3,6 +3,7 @@ from simtk.openmm import app
 from simtk.openmm import Vec3
 from simtk import unit
 import itertools
+import pyparsing as pyp
 
 proteinResidues = ['ALA', 'ASN', 'CYS', 'GLU', 'HIS',
                    'LEU', 'MET', 'PRO', 'THR', 'TYR',
@@ -366,3 +367,403 @@ def sanitizeOEMolecule(molecule):
         oechem.OETriposAtomNames(mol_copy)
 
     return mol_copy
+
+
+def select_oemol_atom_idx_by_language(system, mask=''):
+    """
+    This function selects the atom indexes from the passed oemol molecular complex
+    by using  a defined language. The language allows the selection of the ligand,
+    protein, waters, ions, cofactors or residue numbers. Logic operators not, or,
+    and, noh can be used to refine the selection
+
+    Parameters
+    ----------
+    system : OEMol of the bio-molecular complex protein-ligand
+        The molecular complex
+
+    mask : python string
+        A string used to select atoms. A Backus–Naur Form grammar
+        (https://en.wikipedia.org/wiki/Backus–Naur_form) is defined by the python
+        module pyparsing.
+        The defined grammar tokens are: "ligand", "protein", "ca_protein" ,"water",
+        "ions","cofactors" and "resid chain1:res_idx1 chain2:res_idx2 ... res_idxn"
+        that respectively define the ligand, the protein, carbon alpha protein atoms,
+        water molecules, ions, cofactors and residue numbers. The atom selection can
+        be refined by using the following operator tokens:
+
+        "not" = invert selection
+        "or" = add selections
+        "and" = intersect selections
+        "diff" = logic difference between selections
+        "noh" = remove hydrogens from the selection
+        "around" = select atoms inside the cutoff distance from a given selection
+
+    Returns
+    -------
+    atom_set : python set
+        the select atom indexes
+
+    Notes
+    -----
+        Example of selection string:
+        mask = "ligand or protein"
+        mask = "not water or not ions"
+        mask = "ligand or protein or cofactors"
+        mask = "noh protein"
+        mask = "resid A:17 B:12 17 18"
+        mask = "protein diff resid A:1"
+        mask = "5.0 around protein"
+    """
+
+    def split(system):
+        """
+        This function splits the passed molecule in components and tracks the
+        mapping between the original molecule and the split components. The
+        mapping is created as separated atom component index sets.
+
+        Parameters:
+        -----------
+        system: OEMol
+            The system to split in components. The components are:
+                the protein atoms,
+                the protein carbon alpha atoms
+                the water atoms,
+                the ion atoms,
+                the cofactor atoms
+        Returns:
+        --------
+        dic_set: python dictionary
+            The sysetm is splitted in a dictionary with token words as keys
+            and for value the related atom set. The token keywords are:
+                protein,
+                ca_protein,
+                ligand,
+                water,
+                ions,
+                cofactors,
+                system
+        """
+
+        # Define Empty sets
+        lig_set = set()
+        prot_set = set()
+        ca_prot_set = set()
+        wat_set = set()
+        excp_set = set()
+        ion_set = set()
+        # cofactor_set = set()
+        # system_set = set()
+
+        # Atom Bond Set vector used to contains the whole system
+        frags = oechem.OEAtomBondSetVector()
+
+        # Define Options for the Filter
+        opt = oechem.OESplitMolComplexOptions()
+
+        # The protein filter is set to avoid that multiple
+        # chains are separated during the splitting
+        pf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Protein)
+
+        # The ligand filter is set to recognize just the ligand
+        lf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Ligand)
+
+        # The water filter is set to recognize just water molecules
+        wf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Water)
+
+        # Set options based on the defined filters
+        opt.SetProteinFilter(pf)
+        opt.SetLigandFilter(lf)
+        opt.SetWaterFilter(wf)
+
+        # Define the system fragments
+        if not oechem.OEGetMolComplexFragments(frags, system, opt):
+            oechem.OEThrow.Fatal('Unable to generate the system fragments')
+
+        # Set empty OEMol containers
+        prot = oechem.OEMol()
+        lig = oechem.OEMol()
+        wat = oechem.OEMol()
+        excp = oechem.OEMol()
+
+        # Split the protein from the system
+        atommap = oechem.OEAtomArray(system.GetMaxAtomIdx())
+        if not oechem.OECombineMolComplexFragments(prot, frags, opt, opt.GetProteinFilter(), atommap):
+            oechem.OEThrow.Fatal('Unable to split the Protein')
+        # Populate the protein set and the protein carbon alpha set
+        pred = oechem.OEIsAlphaCarbon()
+        for sys_at in system.GetAtoms():
+            sys_idx = sys_at.GetIdx()
+            at_idx = atommap[sys_idx]
+            if at_idx:
+                prot_set.add(sys_idx)
+                at = system.GetAtom(oechem.OEHasAtomIdx(sys_idx))
+                if pred(at):
+                    ca_prot_set.add(sys_idx)
+                # print(sys_idx, '->', at_idx)
+
+        # Split the ligand from the system
+        atommap = oechem.OEAtomArray(system.GetMaxAtomIdx())
+        if not oechem.OECombineMolComplexFragments(lig, frags, opt, opt.GetLigandFilter(), atommap):
+            oechem.OEThrow.Fatal('Unable to split the Ligand')
+        # Populate the ligand set
+        for sys_at in system.GetAtoms():
+            sys_idx = sys_at.GetIdx()
+            at_idx = atommap[sys_idx]
+            if at_idx:
+                lig_set.add(sys_idx)
+                # print(sys_idx, '->', at_idx)
+
+        # Split the water from the system
+        atommap = oechem.OEAtomArray(system.GetMaxAtomIdx())
+        if not oechem.OECombineMolComplexFragments(wat, frags, opt, opt.GetWaterFilter(), atommap):
+            oechem.OEThrow.Fatal('Unable to split the Water')
+        # Populate the water set
+        for sys_at in system.GetAtoms():
+            sys_idx = sys_at.GetIdx()
+            at_idx = atommap[sys_idx]
+            if at_idx:
+                wat_set.add(sys_idx)
+                # print(sys_idx, '->', at_idx)
+
+        # Split the excipients from the system
+        atommap = oechem.OEAtomArray(system.GetMaxAtomIdx())
+        if not oechem.OECombineMolComplexFragments(excp, frags, opt, opt.GetOtherFilter(), atommap):
+             oechem.OEThrow.Fatal('Unable to split the Excipients')
+        # Populate the excipient set
+        for sys_at in system.GetAtoms():
+            sys_idx = sys_at.GetIdx()
+            at_idx = atommap[sys_idx]
+            if at_idx:
+                excp_set.add(sys_idx)
+                # print(sys_idx, '->', at_idx)
+
+        # Create the ions set
+        for exc_idx in excp_set:
+            atom = system.GetAtom(oechem.OEHasAtomIdx(exc_idx))
+            if atom.GetDegree() == 0:
+                ion_set.add(exc_idx)
+
+        # Create the cofactor set
+        cofactor_set = excp_set - ion_set
+
+        # Create the system set
+        system_set = prot_set | lig_set | excp_set | wat_set
+
+        if len(system_set) != system.NumAtoms():
+            oechem.OEThrow.Fatal("The total system atom number {} is different "
+                                 "from its set representation {}".format(system.NumAtoms(), system_set))
+
+        # The dictionary is used to link the token keywords to the created molecule sets
+        dic_set = {'ligand': lig_set, 'protein': prot_set, 'ca_protein': ca_prot_set,
+                   'water': wat_set,  'ions': ion_set,     'cofactors': cofactor_set, 'system': system_set}
+
+        return dic_set
+
+    def build_set(ls, dsets):
+        """
+        This function select the atom indexes
+
+        Parameters:
+        -----------
+        ls: python list
+            the parsed list with tokens and operand tokes for the selection
+        dsets: python dictionary
+             the dictionary containing the sets for the selection
+
+        Return:
+        -------
+        atom_set: python set
+            the set containing the atom index
+        """
+
+        def noh(ls, dsets):
+            """
+            This function remove hydrogens from the selection
+            """
+            data_set = build_set(ls[1], dsets)
+
+            noh_set = set()
+            pred = oechem.OEIsHydrogen()
+
+            for idx in data_set:
+                atom = system.GetAtom(oechem.OEHasAtomIdx(idx))
+                if not pred(atom):
+                    noh_set.add(idx)
+
+            return noh_set
+
+        def residues(ls):
+            """
+            This function select residues based on the residue numbers. An example of
+            selection can be:
+            mask = 'resid A:16 17 19 B:1'
+            """
+            # List residue atom index to be restrained
+            res_atom_set = set()
+
+            # Dictionary of lists with the chain residues selected to be restrained
+            # e.g. {chainA:[res1, res15], chainB:[res19, res17]}
+            chain_dic = {'': []}
+
+            # Fill out the chain dictionary
+            i = 0
+            while i < len(ls):
+                if ls[i].isdigit():
+                    chain_dic[''].append(int(ls[i]))
+                    i += 1
+                else:
+                    try:
+                        chain_dic[ls[i]].append(int(ls[i + 2]))
+                    except:
+                        chain_dic[ls[i]] = []
+                        chain_dic[ls[i]].append(int(ls[i + 2]))
+                    i += 3
+
+            # Loop over the molecular system to select the atom indexes to be selected
+            hv = oechem.OEHierView(system, oechem.OEAssumption_BondedResidue + oechem.OEAssumption_ResPerceived)
+            for chain in hv.GetChains():
+                chain_id = chain.GetChainID()
+                if chain_id not in chain_dic:
+                    continue
+                for frag in chain.GetFragments():
+                    for hres in frag.GetResidues():
+                        res_num = hres.GetOEResidue().GetResidueNumber()
+                        if res_num not in chain_dic[chain_id]:
+                            continue
+                        for oe_at in hres.GetAtoms():
+                            res_atom_set.add(oe_at.GetIdx())
+
+            return res_atom_set
+
+        def around(dist, ls):
+            """
+            This function select atom not far than the threshold distance from
+            the current selection. The threshold distance is in Angstrom
+
+            selection can be:
+            mask = '5.0 around ligand'
+            """
+            # at = system.GetAtom(oechem.OEHasAtomIdx(idx))
+
+            # Atom set selection
+            atom_set_around = set()
+
+            # Create a OE bit vector mask for each atoms
+            bv_around = oechem.OEBitVector(system.GetMaxAtomIdx())
+
+            # Set the mask atom
+            for at in system.GetAtoms():
+                if at.GetIdx() in ls:
+                    bv_around.SetBitOn(at.GetIdx())
+
+            # Predicate
+            pred = oechem.OEAtomIdxSelected(bv_around)
+
+            # Create the system molecule based on the atom mask
+            molecules = oechem.OEMol()
+            oechem.OESubsetMol(molecules, system, pred)
+
+            # Create the Nearest neighbours
+            nn = oechem.OENearestNbrs(system, float(dist))
+
+            for nbrs in nn.GetNbrs(molecules):
+                for atom in oechem.OEGetResidueAtoms(nbrs.GetBgn()):
+                    if atom.GetIdx() in ls:
+                        continue
+                    atom_set_around.add(atom.GetIdx())
+
+            return atom_set_around
+
+        # Start Body of the selection function by language
+
+        # Terminal Literal return the related set
+        if isinstance(ls, str):
+            return dsets[ls]
+        # Not or Noh
+        if len(ls) == 2:
+            if ls[0] == 'noh':  # Noh case
+                return noh(ls, dsets)
+            elif ls[0] == 'not':  # Not case
+                return dsets['system'] - build_set(ls[1], dsets)
+            else:  # Resid case with one index
+                return residues(ls[1])
+
+        if len(ls) == 3:
+            if ls[1] == 'or':  # Or Case (set union)
+                return build_set(ls[0], dsets) | build_set(ls[2], dsets)
+            elif ls[1] == 'and':  # And Case (set intersection)
+                return build_set(ls[0], dsets) & build_set(ls[2], dsets)
+            elif ls[1] == 'diff':  # Diff case (set difference)
+                return build_set(ls[0], dsets) - build_set(ls[2], dsets)
+            elif ls[1] == 'around':  # Around case
+                return around(ls[0], build_set(ls[2], dsets))
+            else:
+                return residues(ls[1:])  # Resid case with one or two indexes
+        else:
+            if ls[0] == 'resid':
+                return residues(ls[1:])  # Resid case with multiple indexes
+            else:
+                raise ValueError("The passed list have too many tokens: {}".format(ls))
+
+    # Parse Action-Maker
+    def makeLRlike(numterms):
+        if numterms is None:
+            # None operator can only by binary op
+            initlen = 2
+            incr = 1
+        else:
+            initlen = {0: 1, 1: 2, 2: 3, 3: 5}[numterms]
+            incr = {0: 1, 1: 1, 2: 2, 3: 4}[numterms]
+
+        # Define parse action for this number of terms,
+        # to convert flat list of tokens into nested list
+        def pa(s, l, t):
+            t = t[0]
+            if len(t) > initlen:
+                ret = pyp.ParseResults(t[:initlen])
+                i = initlen
+                while i < len(t):
+                    ret = pyp.ParseResults([ret] + t[i:i + incr])
+                    i += incr
+                return pyp.ParseResults([ret])
+
+        return pa
+
+    # Selection function body
+
+    # Residue number selection
+    id = pyp.Optional(pyp.Word(pyp.alphanums) + pyp.Literal(':')) + pyp.Word(pyp.nums)
+    resid = pyp.Group(pyp.Literal("resid") + pyp.OneOrMore(id))
+
+    # Real number for around operator selection
+    real = pyp.Regex(r"\d+(\.\d*)?").setParseAction(lambda t: float(t[0]))
+
+    # Define the tokens for the BNF grammar
+    operand = pyp.Literal("protein") | pyp.Literal("ca_protein") | \
+              pyp.Literal("ligand") | pyp.Literal("water") | \
+              pyp.Literal("ions") | pyp.Literal("cofactors") | resid
+
+    # BNF Grammar definition with parseAction makeLRlike
+    expr = pyp.operatorPrecedence(operand,
+                                    [
+                                        (None, 2, pyp.opAssoc.LEFT, makeLRlike(None)),
+                                        (pyp.Literal("not"), 1, pyp.opAssoc.RIGHT, makeLRlike(1)),
+                                        (pyp.Literal("noh"), 1, pyp.opAssoc.RIGHT, makeLRlike(1)),
+                                        (pyp.Literal("and"), 2, pyp.opAssoc.LEFT, makeLRlike(2)),
+                                        (pyp.Literal("or"), 2, pyp.opAssoc.LEFT, makeLRlike(2)),
+                                        (pyp.Literal("diff"), 2, pyp.opAssoc.LEFT, makeLRlike(2)),
+                                        (real + pyp.Literal("around"), 1, pyp.opAssoc.RIGHT, makeLRlike(2))
+                                    ])
+    # Parse the input string
+    try:
+        ls = expr.parseString(mask, parseAll=True)
+    except Exception as e:
+        raise ValueError("The passed restraint mask is not valid: {}".format(str(e)))
+
+    # Split the system
+    dic_sets = split(system)
+
+    # Select atom indexes
+    atom_set = build_set(ls[0], dic_sets)
+
+    return atom_set

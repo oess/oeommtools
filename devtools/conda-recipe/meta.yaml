@@ -17,6 +17,7 @@ requirements:
     - numpy
     - numpydoc
     - openmm
+    - pyparsyng
   run:
     - python
     - pytest
@@ -24,6 +25,7 @@ requirements:
     - numpy
     - numpydoc
     - openmm
+    - pyparsing
 
 test:
   requires:

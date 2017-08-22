@@ -3,7 +3,7 @@ from simtk import unit
 from simtk.openmm import app
 from openeye import oechem
 from oeommtools import utils
-
+import pickle
 
 class ConversionTester(unittest.TestCase):
     """
@@ -132,10 +132,7 @@ def test_selection_language():
         if res_dic[k] == res_dic_loaded[k]:
             pass
         else:
-            raise ValueError("Restraints checking Errors on mask: {}".format(k))
-
-
-        
+            raise ValueError("Restraints checking Errors on mask: {}".format(k)) 
         
 if __name__ == "__main__":
         unittest.main()

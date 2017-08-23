@@ -75,10 +75,10 @@ class ConversionTester(unittest.TestCase):
 # Check Restraints applications
 def test_selection_language():
 
-    lig_fname ="tests/data/pP38_lp38a_2x_complex.oeb.gz"
+    fname ="tests/data/pP38_lp38a_2x_complex.oeb.gz"
     # Read OEMol molecule
     mol = oechem.OEMol()
-    with oechem.oemolistream(lig_fname) as ifs:
+    with oechem.oemolistream(fname) as ifs:
         oechem.OEReadMolecule(ifs, mol)
 
     res_dic = {}
@@ -123,6 +123,10 @@ def test_selection_language():
     ind_set = utils.select_oemol_atom_idx_by_language(mol, mask=mask)
     res_dic[mask] = ind_set
 
+    mask = '5.0 around ligand'
+    ind_set = utils.select_oemol_atom_idx_by_language(mol, mask=mask)
+    res_dic[mask] = ind_set
+    
     dic_fname = "tests/data/restraint_test_P38_lp38a_2x.pickle"
 
     file = open(dic_fname, 'rb')

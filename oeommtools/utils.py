@@ -373,8 +373,8 @@ def select_oemol_atom_idx_by_language(system, mask=''):
     """
     This function selects the atom indexes from the passed oemol molecular complex
     by using  a defined language. The language allows the selection of the ligand,
-    protein, waters, ions, cofactors or residue numbers. Logic operators not, or,
-    and, noh can be used to refine the selection
+    protein, waters, ions, cofactors, residue numbers and distance selection. Logic 
+    operators not, or, and, noh, diff, around can be used to refine the selection
 
     Parameters
     ----------

@@ -20,6 +20,8 @@ env:
     - DEV_TOOLS="devtools/conda-recipe"
     - USER="OpenEye"
     - OS=$TRAVIS_OS_NAME-64
+    - RMPY35="py35"
+    - RMPY36="py36
 
 before_install:
   - openssl aes-256-cbc -K $encrypted_b67118b96bf1_key -iv $encrypted_b67118b96bf1_iv -in oe_license.txt.enc -out oe_license.txt -d
@@ -47,6 +49,9 @@ script:
 
 after_success:
   - source deactivate
+  - files35="$(anaconda show $USER/$PACKAGENAME/$VERSION | grep $RMPY35* | cut -b 6-)"
+  - files36="$(anaconda show $USER/$PACKAGENAME/$VERSION | grep $RMPY36* | cut -b 6-)"
+  - echo $file35
   - anaconda -t $CONDA_UPLOAD_TOKEN remove --force $USER/$PACKAGENAME/$VERSION
   - echo $USER/$PACKAGENAME/$VERSION
   - anaconda -t $CONDA_UPLOAD_TOKEN upload -u $USER -l Orion $HOME/miniconda/conda-bld/$OS/$PACKAGENAME-*.tar.bz2 --force

@@ -20,6 +20,7 @@ env:
     - DEV_TOOLS="devtools/conda-recipe"
     - USER="OpenEye"
     - OS=$TRAVIS_OS_NAME-64
+    - LABEL=Orion
    
 before_install:
   - openssl aes-256-cbc -K $encrypted_b67118b96bf1_key -iv $encrypted_b67118b96bf1_iv -in oe_license.txt.enc -out oe_license.txt -d
@@ -50,6 +51,6 @@ after_success:
   - files="$(anaconda show $USER/$PACKAGENAME/$VERSION | grep py$CONDA_PY | cut -b 6-)"
   - to_del=(${files// /})
   - for i in "${to_del[@]}"; do echo $USER/$PACKAGENAME/$VERSION/$i; anaconda -t $CONDA_UPLOAD_TOKEN remove --force $USER/$PACKAGENAME/$VERSION/$i; done
-  - anaconda -t $CONDA_UPLOAD_TOKEN upload -u $USER -l Orion $HOME/miniconda/conda-bld/$OS/$PACKAGENAME-*.tar.bz2 --force
+  - anaconda -t $CONDA_UPLOAD_TOKEN upload -u $USER -l $LABEL $HOME/miniconda/conda-bld/$OS/$PACKAGENAME-*.tar.bz2 --force
   - conda convert -p osx-64 $HOME/miniconda/conda-bld/$OS/$PACKAGENAME-*.tar.bz2
-  - anaconda -t $CONDA_UPLOAD_TOKEN upload -u $USER -l Orion osx-64/$PACKAGENAME-*.tar.bz2 --force
+  - anaconda -t $CONDA_UPLOAD_TOKEN upload -u $USER -l $LABEL osx-64/$PACKAGENAME-*.tar.bz2 --force

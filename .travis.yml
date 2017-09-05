@@ -18,7 +18,6 @@ env:
     - VERSION="0.0.2"
     - OE_LICENSE="$HOME/oe_license.txt"
     - DEV_TOOLS="devtools/conda-recipe"
-    - PKG_NAME="oeommtools"
     - USER="OpenEye"
     - OS=$TRAVIS_OS_NAME-64
 
@@ -48,7 +47,7 @@ script:
 
 after_success:
   - source deactivate
-  - anaconda -t $CONDA_UPLOAD_TOKEN remove --force $USER/$PKG_NAME/$VERSION
-  - anaconda -t $CONDA_UPLOAD_TOKEN upload -u $USER -l Orion $HOME/miniconda/conda-bld/$OS/$PKG_NAME-*.tar.bz2 --force
-  - conda convert -p osx-64 $HOME/miniconda/conda-bld/$OS/$PKG_NAME-*.tar.bz2
-  - anaconda -t $CONDA_UPLOAD_TOKEN upload -u $USER -l Orion osx-64/$PKG_NAME-*.tar.bz2 --force
+  - anaconda -t $CONDA_UPLOAD_TOKEN remove --force $USER/$PACKAGENAME/$VERSION
+  - anaconda -t $CONDA_UPLOAD_TOKEN upload -u $USER -l Orion $HOME/miniconda/conda-bld/$OS/$PACKAGENAME-*.tar.bz2 --force
+  - conda convert -p osx-64 $HOME/miniconda/conda-bld/$OS/$PACKAGENAME-*.tar.bz2
+  - anaconda -t $CONDA_UPLOAD_TOKEN upload -u $USER -l Orion osx-64/$PACKAGENAME-*.tar.bz2 --force

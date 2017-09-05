@@ -8,8 +8,8 @@ branches:
 
 env:
   matrix:
-    - python=3.5 CONDA_PY=3.5 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
-    - python=3.6 CONDA_PY=3.6 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
+    - python=3.5 CONDA_PY=35 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
+    - python=3.6 CONDA_PY=36 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
 
 
   global:
@@ -20,9 +20,7 @@ env:
     - DEV_TOOLS="devtools/conda-recipe"
     - USER="OpenEye"
     - OS=$TRAVIS_OS_NAME-64
-    - RMPY35="py35"
-    - RMPY36="py36
-
+   
 before_install:
   - openssl aes-256-cbc -K $encrypted_b67118b96bf1_key -iv $encrypted_b67118b96bf1_iv -in oe_license.txt.enc -out oe_license.txt -d
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
@@ -49,9 +47,8 @@ script:
 
 after_success:
   - source deactivate
-  - files35="$(anaconda show $USER/$PACKAGENAME/$VERSION | grep $RMPY35* | cut -b 6-)"
-  - files36="$(anaconda show $USER/$PACKAGENAME/$VERSION | grep $RMPY36* | cut -b 6-)"
-  - echo $file35
+  - files="$(anaconda show $USER/$PACKAGENAME/$VERSION | grep py$CONDA_PY | cut -b 6-)"
+  - echo $files
   - anaconda -t $CONDA_UPLOAD_TOKEN remove --force $USER/$PACKAGENAME/$VERSION
   - echo $USER/$PACKAGENAME/$VERSION
   - anaconda -t $CONDA_UPLOAD_TOKEN upload -u $USER -l Orion $HOME/miniconda/conda-bld/$OS/$PACKAGENAME-*.tar.bz2 --force

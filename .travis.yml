@@ -48,8 +48,8 @@ script:
 after_success:
   - source deactivate
   - files="$(anaconda show $USER/$PACKAGENAME/$VERSION | grep py$CONDA_PY | cut -b 6-)"
-  - echo $files
-  - anaconda -t $CONDA_UPLOAD_TOKEN remove --force $USER/$PACKAGENAME/$VERSION
+  - to_del=(${files// /})
+  - for i in "${to_del[@]}"; do anaconda -t $CONDA_UPLOAD_TOKEN remove --force $USER/$PACKAGENAME/$VERSION/$i; done
   - echo $USER/$PACKAGENAME/$VERSION
   - anaconda -t $CONDA_UPLOAD_TOKEN upload -u $USER -l Orion $HOME/miniconda/conda-bld/$OS/$PACKAGENAME-*.tar.bz2 --force
   - conda convert -p osx-64 $HOME/miniconda/conda-bld/$OS/$PACKAGENAME-*.tar.bz2

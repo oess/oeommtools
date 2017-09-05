@@ -4,6 +4,7 @@ language: python
 
 python:
   - 3.5
+  - 3.6
 
 branches:
     only:
@@ -11,7 +12,9 @@ branches:
 
 env:
   matrix:
-    - python=3.5 CONDA_PY=35 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
+    - python=3.5 CONDA_PY=3.5 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
+    - python=3.6 CONDA_PY=3.6 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
+
 
   global:
     - ORGNAME="omnia"

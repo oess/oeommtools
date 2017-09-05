@@ -13,7 +13,7 @@ env:
 
 
   global:
-    - ORGNAME="omnia"
+    - ORGNAME="omnia nividic"
     - PACKAGENAME="oeommtools"
     - VERSION="0.0.2"
     - OE_LICENSE="$HOME/oe_license.txt"

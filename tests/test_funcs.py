@@ -168,6 +168,7 @@ class SolvatePackmolTester(unittest.TestCase):
 
         with oechem.oemolistream(fcomplex) as ifs:
             oechem.OEReadMolecule(ifs, mol)
+
         # Solvate the system
         solv_complex = packmol.oesolvate_packmol(mol, density=1.0,
                                                  padding_distance=10.0,

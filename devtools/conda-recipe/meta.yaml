@@ -19,6 +19,7 @@ requirements:
     - openmm
     - pyparsing
     - packmol ==17.221
+    - parmed
   run:
     - python
     - pytest
@@ -28,6 +29,7 @@ requirements:
     - openmm
     - pyparsing
     - packmol
+    - parmed
 
 test:
   requires:

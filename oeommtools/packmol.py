@@ -12,9 +12,18 @@ from oeommtools import data_utils
 
 def oesolvate_packmol(solute, density=1.0, padding_distance=10.0,
                       solvents='[H]O[H]', molar_fractions='1.0', close_solvent=True,
-                      salt='Na+, Cl-', salt_concentration=0.0, neutralize_solute=True, **kargs):
+                      salt='[Na+], [Cl-]', salt_concentration=0.0, neutralize_solute=True, **kargs):
     """
-    This function solvates the system in a box by using Packmol
+    This function solvates the passed solute in a cubic box by using Packmol. Packmol creates
+    an initial point for molecular dynamics simulations by packing molecule in defined regions
+    of space. For additional info:
+    http://www.ime.unicamp.br/~martinez/packmol/home.shtml
+
+    The cubic box volume is estimated by the using the padding parameter and the solute size.
+    The number of solvent molecules is calculated by using the specified density and volume.
+    Solvent molecules are specified as comma separated smiles strings. The molar fractions
+    of each solvent molecule are specified in a similar fashion. By default if the solute is
+    charged counter ions are added to neutralize it
 
     Parameters:
     -----------
@@ -25,9 +34,9 @@ def oesolvate_packmol(solute, density=1.0, padding_distance=10.0,
     padding_distance: float
         The distance between the solute and the edge of the box in A
     solvents: python string
-        A comma separated smiles string of the solution solvents
+        A comma separated smiles string of the solvent molecules
     molar_fractions: python string
-        A comma separated molar fraction string of the solution solvents
+        A comma separated molar fraction string of the solvent molecules
     close_solvent: boolean
         If True solvent molecules will be placed very close to the solute
     salt: python string
@@ -41,7 +50,7 @@ def oesolvate_packmol(solute, density=1.0, padding_distance=10.0,
     -------
     oe_mol: OEMol
         The solvated system. A SD tag with name 'box_vector' is attached the
-        output molecule with the system box vectors
+        output molecule containing the system box vectors
     """
 
     def BoundingBox(molecule):

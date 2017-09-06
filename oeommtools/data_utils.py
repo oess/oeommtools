@@ -3,7 +3,7 @@ import numpy as np
 from sys import stdout
 from tempfile import NamedTemporaryFile
 from openeye import oechem
-from floe.api.orion import in_orion, StreamingDataset, upload_file
+#from floe.api.orion import in_orion, StreamingDataset, upload_file
 from simtk import unit, openmm
 from simtk.openmm import app
 try:
@@ -193,9 +193,9 @@ class PackageOEMol(object):
                 tar.add(name)
             tar.close()
 
-            if in_orion():
-                # MUST upload tar file directly back to Orion or they disappear.
-                upload_file(tarname, tarname, tags=['TAR'])
+            # if in_orion():
+            #     # MUST upload tar file directly back to Orion or they disappear.
+            #     upload_file(tarname, tarname, tags=['TAR'])
             # Clean up files that have been added to tar.
             cleanup(totar)
 
@@ -277,23 +277,23 @@ def combinePositions(proteinPositions, molPositions):
     return positions
 
 
-def download_dataset_to_file(dataset_id):
-    """
-    Used to retrieve a data set either from Orion or from the local machine
-    """
-    if in_orion():
-        if dataset_id in download_cache:
-            return download_cache[dataset_id]
-        if os.path.isfile(dataset_id):
-            download_cache[dataset_id] = dataset_id
-            return dataset_id
-        tmp = NamedTemporaryFile(suffix=".oeb.gz", delete=False)
-        stream = StreamingDataset(dataset_id, input_format=".oeb.gz")
-        stream.download_to_file(tmp.name)
-        download_cache[dataset_id] = tmp.name
-        return tmp.name
-    else:
-        return dataset_id
+# def download_dataset_to_file(dataset_id):
+#     """
+#     Used to retrieve a data set either from Orion or from the local machine
+#     """
+#     if in_orion():
+#         if dataset_id in download_cache:
+#             return download_cache[dataset_id]
+#         if os.path.isfile(dataset_id):
+#             download_cache[dataset_id] = dataset_id
+#             return dataset_id
+#         tmp = NamedTemporaryFile(suffix=".oeb.gz", delete=False)
+#         stream = StreamingDataset(dataset_id, input_format=".oeb.gz")
+#         stream.download_to_file(tmp.name)
+#         download_cache[dataset_id] = tmp.name
+#         return tmp.name
+#     else:
+#         return dataset_id
 
     
 def dump_query(prefix, name, qmol, receptor):
@@ -342,7 +342,7 @@ class MDData(object):
         Parameters
         ----------
         mol : OEMol() OpenEye Molecule object
-            the moleculur system
+            the molecular system
         """
         # Initialization Reference positions
         self.ref_positions = None

@@ -766,3 +766,56 @@ def select_oemol_atom_idx_by_language(system, mask=''):
     atom_set = build_set(ls[0], dic_sets)
 
     return atom_set
+
+
+def split(complex):
+    """
+    This function splits the passed system in protein, ligand,
+    water and excipients
+
+    Parameters:
+    ----------
+    complex : oechem.OEMol
+        The bio-molecular complex to split
+
+    Output:
+    -------
+    protein : oechem.OEMol
+        The split protein
+    ligand : oechem.OEMol
+        The split ligand
+    wat : oechem.OEMol
+        The spit water
+    other : oechem.OEMol
+        The excipients
+
+    """
+
+    # Set empty molecule containers
+    prot = oechem.OEMol()
+    lig = oechem.OEMol()
+    wat = oechem.OEMol()
+    other = oechem.OEMol()
+
+    # Define the Filter options before the splitting
+    opt = oechem.OESplitMolComplexOptions()
+
+    # The protein filter is set to avoid that multiple
+    # chains are separated during the splitting
+    pf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Protein)
+    # The ligand filter is set to recognize just the ligand
+    lf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Ligand)
+    # The water filter is set to recognize just water molecules
+    wf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Water)
+    opt.SetProteinFilter(pf)
+    opt.SetLigandFilter(lf)
+    opt.SetWaterFilter(wf)
+
+    # Splitting the system
+    if not oechem.OESplitMolComplex(lig, prot, wat, other, complex, opt):
+        oechem.OEThrow.Fatal('Unable to split the complex')
+
+    # At this point prot contains the protein, lig contains the ligand,
+    # wat contains the water and excipients contains the excipients
+
+    return prot, lig, wat, other

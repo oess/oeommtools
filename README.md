@@ -17,13 +17,36 @@ Authors
 
 ## Installation
 
-conda install -c OpenEye/label/Orion -c omnia oeommtools
+conda install -c openeye/label/Orion oeommtools -c nividic -c omnia
 
 Usage
 -----
-```python
-import oeommtools
+The following example solvate a benzene molecule in a box of water:
 
+```python
+from oeommtools import packmol
+from openeye import oechem
+from openeye import oeomega
+
+smiles = 'c1ccccc1'
+solute = oechem.OEMol()
+
+omegaOpts = oeomega.OEOmegaOptions()
+omegaOpts.SetMaxConfs(1)
+omega = oeomega.OEOmega(omegaOpts)
+
+if not oechem.OESmilesToMol(solute, smiles):
+    oechem.OEThrow.Fatal("SMILES string parsing fails for the string: {}".format(smiles))
+if not omega(solute):
+    oechem.OEThrow.Fatal("Conformer generation fails for the molecule with smiles string: {}".format(smile))
+
+solvate_mol = packmol.oesolvate_packmol(solute, density=1.0, padding_distance=10.0,
+                                        solvents='[H]O[H]', molar_fractions='1.0', close_solvent=True,
+                                        salt='[Na+], [Cl-]', salt_concentration=0.0, neutralize_solute=True)
+
+ofs = oechem.oemolostream("solvated.pdb")
+oechem.OEWriteConstMolecule(ofs, solvate_mol)
+ofs.close()
 
 ```
 

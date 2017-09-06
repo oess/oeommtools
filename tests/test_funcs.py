@@ -170,13 +170,13 @@ class SolvatePackmolTester(unittest.TestCase):
             oechem.OEReadMolecule(ifs, mol)
 
         # Solvate the system
-        solv_complex = packmol.oesolvate_packmol(mol, density=1.0,
-                                                 padding_distance=10.0,
-                                                 solvents='[H]O[H]',
-                                                 molar_fractions='1.0',
-                                                 close_solvent=True,
-                                                 salt='[Na+], [Cl-]', salt_concentration=100.0,
-                                                 neutralize_solute=True)
+        solv_complex = packmol.oesolvate(mol, density=1.0,
+                                         padding_distance=10.0,
+                                         solvents='[H]O[H]',
+                                         molar_fractions='1.0',
+                                         close_solvent=True,
+                                         salt='[Na+], [Cl-]', salt_concentration=100.0,
+                                         neutralize_solute=True)
 
         prot, lig, wat, other = utils.split(solv_complex)
 

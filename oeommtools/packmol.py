@@ -10,9 +10,9 @@ import os
 from oeommtools import data_utils
 
 
-def oesolvate_packmol(solute, density=1.0, padding_distance=10.0,
-                      solvents='[H]O[H]', molar_fractions='1.0', close_solvent=True,
-                      salt='[Na+], [Cl-]', salt_concentration=0.0, neutralize_solute=True, **kargs):
+def oesolvate(solute, density=1.0, padding_distance=10.0,
+              solvents='[H]O[H]', molar_fractions='1.0', close_solvent=True,
+              salt='[Na+], [Cl-]', salt_concentration=0.0, neutralize_solute=True, **kargs):
     """
     This function solvates the passed solute in a cubic box by using Packmol. Packmol creates
     an initial point for molecular dynamics simulations by packing molecule in defined regions

@@ -34,7 +34,8 @@ def oemol_to_openmmTop(mol):
     """
     # OE Hierarchical molecule view
     hv = oechem.OEHierView(mol, oechem.OEAssumption_BondedResidue +
-                           oechem.OEAssumption_ResPerceived)
+                           oechem.OEAssumption_ResPerceived+
+                           oechem.OEAssumption_PDBOrder)
 
     # Create empty OpenMM Topology
     topology = app.Topology()

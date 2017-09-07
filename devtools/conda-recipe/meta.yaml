@@ -18,7 +18,7 @@ requirements:
     - numpydoc
     - openmm
     - pyparsing
-    - packmol ==17.221
+    - packmol
     - parmed
   run:
     - python

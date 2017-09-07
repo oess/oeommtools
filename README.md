@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/oess/oeommtools.svg?branch=master)](https://travis-ci.org/oess/oeommtools)
 
-[![Anaconda Badge](https://anaconda.org/nividic/oeommtools/badges/version.svg)](https://anaconda.org/openeye/oeommtools/badges/version.svg)
+[![Anaconda Badge](https://anaconda.org/openeye/oeommtools/badges/version.svg)](https://anaconda.org/openeye/oeommtools/badges/version.svg)
 
 # OEOMMTools
 These are a collection of tools developed to integrate and mix

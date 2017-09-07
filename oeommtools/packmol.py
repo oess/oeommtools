@@ -252,6 +252,9 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     # Solvent number of monomers
     n_monomers = [int(round(mf*div)) for mf in mol_fractions]
 
+    if not all([nm > 0 for nm in n_monomers]):
+        oechem.OEThrow.Fatal("Error negative number of solvent components: the density could be too low")
+
     # for i in range(0, len(solvent_smiles)):
     #     print("Number of molecules for the component {} = {}".format(solvent_smiles[i], n_monomers[i]))
 

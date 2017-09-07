@@ -13,8 +13,7 @@ env:
 
 
   global:
-    - ORGNAME1="omnia"
-    - ORGNAME2="nividic"
+    - ORGNAME="omnia"
     - PACKAGENAME="oeommtools"
     - VERSION="0.0.2"
     - OE_LICENSE="$HOME/oe_license.txt"
@@ -40,8 +39,7 @@ install:
   - source activate openeye
   - pip install -i ${OPENEYE_CHANNEL} openeye-toolkits-python3-ubuntu-14.04-x64 && python -c "import openeye; print(openeye.__version__)"
 #  - pip install --extra-index-url https://pypi.anaconda.org/t/$CONDA_TOKEN/OpenEye/label/Orion/simple OpenEye-floe-pkg-tools
-  - conda config --add channels ${ORGNAME1}
-  - conda config --add channels ${ORGNAME2}
+  - conda config --add channels ${ORGNAME}
   - conda build --python $python ${DEV_TOOLS}
   - conda install --use-local ${PACKAGENAME}
   - conda list

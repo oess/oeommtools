@@ -17,7 +17,7 @@ Authors
 
 ## Installation
 
-conda install -c openeye/label/Orion oeommtools -c nividic -c omnia
+conda install -c openeye/label/Orion oeommtools -c omnia
 
 Usage
 -----

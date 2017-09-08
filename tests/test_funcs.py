@@ -174,6 +174,7 @@ class SolvatePackmolTester(unittest.TestCase):
                                          padding_distance=10.0,
                                          solvents='[H]O[H]',
                                          molar_fractions='1.0',
+                                         geometry='box',
                                          close_solvent=True,
                                          salt='[Na+], [Cl-]', salt_concentration=100.0,
                                          neutralize_solute=True)

@@ -45,7 +45,7 @@ if not omega(solute):
     oechem.OEThrow.Fatal("Conformer generation fails for the molecule with smiles string: {}".format(benzene))
 
 # Solvate the system in water
-solvate_mol = packmol.oesolvate(solute, density=1.0, padding_distance=10.0,
+solvate_mol = packmol.oesolvate(solute, density=1.0, padding_distance=10.0, geometry='box',
                                 solvents='[H]O[H]', molar_fractions='1.0', close_solvent=True,
                                 salt='[Na+], [Cl-]', salt_concentration=0.0, neutralize_solute=True)
 

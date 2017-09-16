@@ -87,7 +87,7 @@ class SelectionLanguageTester(unittest.TestCase):
     # Check Selection Language
     def test_selection_language(self):
 
-        fcomplex ="tests/data/pP38_lp38a_2x_complex.oeb.gz"
+        fcomplex ="tests/data/pP38_lp38a_2x_complex.pdb"
         # Read OEMol molecule
         mol = oechem.OEMol()
         with oechem.oemolistream(fcomplex) as ifs:

@@ -415,7 +415,7 @@ def select_oemol_atom_idx_by_language(system, mask=''):
         mask = "5.0 around protein"
     """
 
-    def split(system):
+    def split(system, ligand_res_name='LIG'):
         """
         This function splits the passed molecule in components and tracks the
         mapping between the original molecule and the split components. The
@@ -460,20 +460,47 @@ def select_oemol_atom_idx_by_language(system, mask=''):
         # Define Options for the Filter
         opt = oechem.OESplitMolComplexOptions()
 
+
+        # # The protein filter is set to avoid that multiple
+        # # chains are separated during the splitting
+        # pf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Protein)
+        #
+        # # The ligand filter is set to recognize just the ligand
+        # lf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Ligand)
+        #
+        # # The water filter is set to recognize just water molecules
+        # wf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Water)
+        #
+        # # Set options based on the defined filters
+        # opt.SetProteinFilter(pf)
+        # opt.SetLigandFilter(lf)
+        # opt.SetWaterFilter(wf)
+        #
+
+
+
         # The protein filter is set to avoid that multiple
-        # chains are separated during the splitting
+        # chains are separated during the splitting and peptide
+        # molecules are recognized as ligands
         pf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Protein)
+        peptide = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Peptide)
+        protein_filter = oechem.OEOrRoleSet(pf, peptide)
+        opt.SetProteinFilter(protein_filter)
 
         # The ligand filter is set to recognize just the ligand
         lf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Ligand)
+        not_protein_filter = oechem.OENotRoleSet(protein_filter)
+        ligand_filter = oechem.OEAndRoleSet(lf, not_protein_filter)
+        opt.SetLigandFilter(ligand_filter)
 
         # The water filter is set to recognize just water molecules
         wf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Water)
-
-        # Set options based on the defined filters
-        opt.SetProteinFilter(pf)
-        opt.SetLigandFilter(lf)
         opt.SetWaterFilter(wf)
+
+        # Set Category
+        cat = oechem.OEMolComplexCategorizer()
+        cat.AddLigandName(ligand_res_name)
+        opt.SetCategorizer(cat)
 
         # Define the system fragments
         if not oechem.OEGetMolComplexFragments(frags, system, opt):
@@ -769,7 +796,7 @@ def select_oemol_atom_idx_by_language(system, mask=''):
     return atom_set
 
 
-def split(complex):
+def split(complex, ligand_res_name='LIG'):
     """
     This function splits the passed system in protein, ligand,
     water and excipients
@@ -778,6 +805,8 @@ def split(complex):
     ----------
     complex : oechem.OEMol
         The bio-molecular complex to split
+    ligand_res_name : Python string
+        The ligand residue name used to recognize the ligand
 
     Output:
     -------
@@ -802,20 +831,32 @@ def split(complex):
     opt = oechem.OESplitMolComplexOptions()
 
     # The protein filter is set to avoid that multiple
-    # chains are separated during the splitting
-    pf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Protein)
+    # chains are separated during the splitting and peptide
+    # molecules are recognized as ligands
+    pf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Protein)     
+    peptide = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Peptide)
+    protein_filter = oechem.OEOrRoleSet(pf, peptide)
+    opt.SetProteinFilter(protein_filter)
+    
     # The ligand filter is set to recognize just the ligand
     lf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Ligand)
+    not_protein_filter = oechem.OENotRoleSet(protein_filter)
+    ligand_filter = oechem.OEAndRoleSet(lf, not_protein_filter)
+    opt.SetLigandFilter(ligand_filter)
+
     # The water filter is set to recognize just water molecules
     wf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Water)
-    opt.SetProteinFilter(pf)
-    opt.SetLigandFilter(lf)
     opt.SetWaterFilter(wf)
 
+    # Set Category
+    cat = oechem.OEMolComplexCategorizer()
+    cat.AddLigandName(ligand_res_name)
+    opt.SetCategorizer(cat)
+    
     # Splitting the system
     if not oechem.OESplitMolComplex(lig, prot, wat, other, complex, opt):
         oechem.OEThrow.Fatal('Unable to split the complex')
-
+        
     # At this point prot contains the protein, lig contains the ligand,
     # wat contains the water and excipients contains the excipients
 

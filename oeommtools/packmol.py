@@ -11,7 +11,9 @@ from oeommtools import data_utils
 import random
 import string
 
+
 def oesolvate(solute, density=1.0, padding_distance=10.0,
+              distance_between_atoms=2.5,
               solvents='[H]O[H]', molar_fractions='1.0',
               geometry='box', close_solvent=True,
               salt='[Na+], [Cl-]', salt_concentration=0.0,
@@ -35,7 +37,10 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     density: float
         The solution density in g/ml
     padding_distance: float
-        The distance between the solute and the edge of the selected geometry in A
+        The largest dimension of the solute (along the x, y, or z axis) is determined (in A), 
+        and a cubic box of size (largest dimension)+2*padding is used
+    distance_between_atoms: float
+        The minimum distance between atoms in A
     solvents: python string
         A comma separated smiles string of the solvent molecules
     molar_fractions: python string
@@ -325,9 +330,11 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     solute_template = """\n\n# Solute\nstructure {}\nnumber 1\nfixed 0. 0. 0. 0. 0. 0.\nresnumbers 1\nend structure"""
 
     if geometry == 'box':
-        solvent_template = """\nstructure {}\nnumber {}\ninside box {:0.3f} {:0.3f} {:0.3f} {:0.3f} {:0.3f} {:0.3f}\nchain !\nresnumbers 3\nend structure"""
+        solvent_template = """\nstructure {}\nnumber {}\ninside box {:0.3f} {:0.3f} {:0.3f} {:0.3f} {:0.3f} {:0.3f}\
+        \nchain !\nresnumbers 3\nend structure"""
     if geometry == 'sphere':
-        solvent_template = """\nstructure {}\nnumber {}\ninside sphere {:0.3f} {:0.3f} {:0.3f} {:0.3f}\nchain !\nresnumbers 3\nend structure"""
+        solvent_template = """\nstructure {}\nnumber {}\ninside sphere {:0.3f} {:0.3f} {:0.3f} {:0.3f}\
+        \nchain !\nresnumbers 3\nend structure"""
 
     # Create solvents .pdb files
     solvent_smiles_pdbs = []
@@ -346,7 +353,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
 
     # Write Packmol header section
     mixture_pdb = 'mixture'+'_'+os.path.basename(tempfile.mktemp(suffix='.pdb'))
-    body = header_template.format(2.0, mixture_pdb)
+    body = header_template.format(distance_between_atoms, mixture_pdb)
     # Write Packmol configuration file solute section
     body += solute_template.format(solute_pdb)
 
@@ -430,7 +437,6 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     # solvent molecules are extracted from the mixture system and
     # added back to the starting solute
 
-
     # Extract from the solution system the solvent molecules
     # by checking the previous solute generated ID: id+resname+chainID
     hv_solvated = oechem.OEHierView(solvated, oechem.OEAssumption_BondedResidue +
@@ -452,6 +458,9 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     # Add the solvent molecules to the solute copy
     solvated_system = solute.CreateCopy()
     oechem.OEAddMols(solvated_system, components)
+
+    #Set Title
+    solvated_system.SetTitle(solute.GetTitle())
 
     # Cleaning
     to_delete = solvent_smiles_pdbs+[packmol_filename, solute_pdb, mixture_pdb]

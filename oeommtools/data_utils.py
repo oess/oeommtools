@@ -411,4 +411,4 @@ class MDData(object):
             packedpos = PackageOEMol.encodePyObj(self.ref_positions)
             mol.SetData(oechem.OEGetTag('OEMDDataRefPositions'), packedpos)
         
-        return mol
+        return mol 

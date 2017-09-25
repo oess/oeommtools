@@ -172,6 +172,7 @@ class SolvatePackmolTester(unittest.TestCase):
         # Solvate the system
         solv_complex = packmol.oesolvate(mol, density=1.0,
                                          padding_distance=10.0,
+                                         distance_between_atoms=2.0,
                                          solvents='[H]O[H]',
                                          molar_fractions='1.0',
                                          geometry='box',

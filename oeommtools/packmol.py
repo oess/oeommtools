@@ -361,12 +361,17 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     xc = (BB_solute[0][0]+BB_solute[1][0])/2.
     yc = (BB_solute[0][1]+BB_solute[1][1])/2.
     zc = (BB_solute[0][2]+BB_solute[1][2])/2.
-    xmin = xc - (box_edge/2.)/unit.angstrom
-    xmax = xc + (box_edge/2.)/unit.angstrom
-    ymin = yc - (box_edge/2.)/unit.angstrom
-    ymax = yc + (box_edge/2.)/unit.angstrom
-    zmin = zc - (box_edge/2.)/unit.angstrom
-    zmax = zc + (box_edge/2.)/unit.angstrom
+
+    # Correct for periodic box conditions to avoid
+    # steric clashes at the box edges
+    pbc_correction = 1.0 * unit.angstrom
+
+    xmin = xc - ((box_edge - pbc_correction)/2.)/unit.angstrom
+    xmax = xc + ((box_edge - pbc_correction)/2.)/unit.angstrom
+    ymin = yc - ((box_edge - pbc_correction)/2.)/unit.angstrom
+    ymax = yc + ((box_edge - pbc_correction)/2.)/unit.angstrom
+    zmin = zc - ((box_edge - pbc_correction)/2.)/unit.angstrom
+    zmax = zc + ((box_edge - pbc_correction)/2.)/unit.angstrom
 
     # Packmol setting for the solvent section
     body += '\n\n# Solvent'

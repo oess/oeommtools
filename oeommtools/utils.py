@@ -369,6 +369,61 @@ def sanitizeOEMolecule(molecule):
     return mol_copy
 
 
+def strip_water_ions(in_system):
+    """
+    This function remove waters and ions molecules
+    from the input system
+
+    Parameters:
+    ----------
+    in_system : oechem.OEMol
+        The bio-molecular system to clean
+    opt: python dictionary
+        The system option
+
+    Output:
+    -------
+    clean_system : oechem.OEMol
+        The cleaned system
+
+    """
+    # Copy the input system
+    system = in_system.CreateCopy()
+
+    # Create a bit vector mask
+    bv = oechem.OEBitVector(system.GetMaxAtomIdx())
+    bv.NegateBits()
+
+    # Create a Hierarchical View of the protein system
+    hv = oechem.OEHierView(system, oechem.OEAssumption_BondedResidue +
+                           oechem.OEAssumption_ResPerceived)
+
+    # Looping over the system residues
+    for chain in hv.GetChains():
+        for frag in chain.GetFragments():
+            for hres in frag.GetResidues():
+                res = hres.GetOEResidue()
+
+                # Check if a residue is a mono atomic ion
+                natoms = 0
+                for at in hres.GetAtoms():
+                    natoms += 1
+
+                # Set the atom bit mask off
+                if oechem.OEGetResidueIndex(res) == oechem.OEResidueIndex_HOH or natoms == 1:
+                    # Set Bit mask
+                    atms = hres.GetAtoms()
+                    for at in atms:
+                        bv.SetBitOff(at.GetIdx())
+
+    # Extract the system without waters or ions
+    pred = oechem.OEAtomIdxSelected(bv)
+    clean_system = oechem.OEMol()
+    oechem.OESubsetMol(clean_system, system, pred)
+
+    return clean_system
+
+
 def select_oemol_atom_idx_by_language(system, mask=''):
     """
     This function selects the atom indexes from the passed oemol molecular complex
@@ -459,25 +514,6 @@ def select_oemol_atom_idx_by_language(system, mask=''):
 
         # Define Options for the Filter
         opt = oechem.OESplitMolComplexOptions()
-
-
-        # # The protein filter is set to avoid that multiple
-        # # chains are separated during the splitting
-        # pf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Protein)
-        #
-        # # The ligand filter is set to recognize just the ligand
-        # lf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Ligand)
-        #
-        # # The water filter is set to recognize just water molecules
-        # wf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Water)
-        #
-        # # Set options based on the defined filters
-        # opt.SetProteinFilter(pf)
-        # opt.SetLigandFilter(lf)
-        # opt.SetWaterFilter(wf)
-        #
-
-
 
         # The protein filter is set to avoid that multiple
         # chains are separated during the splitting and peptide

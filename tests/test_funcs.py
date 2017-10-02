@@ -211,5 +211,38 @@ class SolvatePackmolTester(unittest.TestCase):
         self.assertEqual(box_vectors[2][1] / unit.nanometers, 0.0)
 
 
+
+class RemoveWaterIonsTester(unittest.TestCase):
+    """
+    Test Remove Water and Ions
+    """
+
+    def setUp(self):
+        pass
+
+    def test_remove_water_ions(self):
+        # Complex file name
+        fcomplex = "tests/data/pP38_lp38a_2x_complex.pdb"
+
+        # Read OEMol molecule
+        mol = oechem.OEMol()
+
+        with oechem.oemolistream(fcomplex) as ifs:
+            oechem.OEReadMolecule(ifs, mol)
+
+        clean_system = utils.strip_water_ions(mol)
+
+        prot, lig, wat, other = utils.split(clean_system)
+
+        npa = prot.GetMaxAtomIdx()
+        nla = lig.GetMaxAtomIdx()
+        noa = other.GetMaxAtomIdx()
+        nwa = wat.GetMaxAtomIdx()
+
+        self.assertEquals(npa, 5629)
+        self.assertEquals(nla, 43)
+        self.assertEquals(noa, 0)
+        self.assertEquals(nwa, 0)
+
 if __name__ == "__main__":
         unittest.main()

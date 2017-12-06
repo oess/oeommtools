@@ -42,9 +42,9 @@ class ConversionTester(unittest.TestCase):
             at0_idx = bond[0].index
             at1_idx = bond[1].index
             if at0_idx < at1_idx:
-                dic_bond_openmm[(at0_idx, at1_idx)] = bond.order
+                dic_bond_openmm[(at0_idx, at1_idx)] = (bond.order, bond.type)
             else:
-                dic_bond_openmm[(at1_idx, at0_idx)] = bond.order
+                dic_bond_openmm[(at1_idx, at0_idx)] = (bond.order, bond.type)
 
         dic_bond_oe = {}
         for bond in mol.GetBonds():
@@ -52,9 +52,9 @@ class ConversionTester(unittest.TestCase):
             at0_idx = bond.GetBgnIdx()
             at1_idx = bond.GetEndIdx()
             if at0_idx < at1_idx: 
-                dic_bond_oe[(at0_idx, at1_idx)] = bond.GetOrder()
+                dic_bond_oe[(at0_idx, at1_idx)] = (bond.GetOrder(), bond.GetType())
             else:
-                dic_bond_oe[(at1_idx, at0_idx)] = bond.GetOrder()
+                dic_bond_oe[(at1_idx, at0_idx)] = (bond.GetOrder(), bond.GetType())
 
         self.assertEqual(dic_bond_openmm, dic_bond_oe)
 
@@ -209,7 +209,6 @@ class SolvatePackmolTester(unittest.TestCase):
         self.assertAlmostEqual(box_vectors[2][2] / unit.nanometers, 8.23, delta=0.01)
         self.assertEqual(box_vectors[2][0] / unit.nanometers, 0.0)
         self.assertEqual(box_vectors[2][1] / unit.nanometers, 0.0)
-
 
 
 class RemoveWaterIonsTester(unittest.TestCase):

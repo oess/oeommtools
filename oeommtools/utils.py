@@ -113,7 +113,7 @@ def oemol_to_openmmTop(mol):
     return topology, positions
 
 
-def openmmTop_to_oemol(topology, positions, verbose=True):
+def openmmTop_to_oemol(topology, positions):
     """
     This function converts an OpenMM topology in an OEMol
 
@@ -124,8 +124,6 @@ def openmmTop_to_oemol(topology, positions, verbose=True):
     positions : OpenMM Quantity
         The molecule atom positions associated with the
         topology
-    verbose: Bool
-        print or not information
 
     Return:
     -------

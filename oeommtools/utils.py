@@ -72,6 +72,62 @@ def oemol_to_openmmTop(mol):
     # Count the number of bonds in the openmm topology
     omm_bond_count = 0
 
+    def IsAmideBond(oe_bond):
+
+        # This supporting function checks if the passed bond is an amide bond or not.
+        # Our definition of amide bond C-N between a Carbon and a Nitrogen atom is:
+        #          O
+        #          ║
+        #  CA or O-C-N-
+        #            |
+
+        # The amide bond C-N is a single bond
+        if oe_bond.GetOrder() != 1:
+            return False
+
+        atomB = oe_bond.GetBgn()
+        atomE = oe_bond.GetEnd()
+
+        # The amide bond is made by Carbon and Nitrogen atoms
+        if not (atomB.IsCarbon() and atomE.IsNitrogen() or
+                (atomB.IsNitrogen() and atomE.IsCarbon())):
+            return False
+
+        # Select Carbon and Nitrogen atoms
+        if atomB.IsCarbon():
+            C_atom = atomB
+            N_atom = atomE
+        else:
+            C_atom = atomE
+            N_atom = atomB
+
+        # Carbon and Nitrogen atoms must have 3 neighbour atoms
+        if not (C_atom.GetDegree() == 3 and N_atom.GetDegree() == 3):
+            return False
+
+        double_bonds = 0
+        single_bonds = 0
+
+        for bond in C_atom.GetBonds():
+            # The C-O bond can be single or double.
+            if (bond.GetBgn() == C_atom and bond.GetEnd().IsOxygen()) or \
+                    (bond.GetBgn().IsOxygen() and bond.GetEnd() == C_atom):
+                if bond.GetOrder() == 2:
+                    double_bonds += 1
+                if bond.GetOrder() == 1:
+                    single_bonds += 1
+            # The CA-C bond is single
+            if (bond.GetBgn() == C_atom and bond.GetEnd().IsCarbon()) or \
+                    (bond.GetBgn().IsCarbon() and bond.GetEnd() == C_atom):
+                if bond.GetOrder() == 1:
+                    single_bonds += 1
+        # Just one double and one single bonds are connected to C
+        # In this case the bond is an amide bond
+        if double_bonds == 1 and single_bonds == 1:
+            return True
+        else:
+            return False
+
     # Creating bonds
     for oe_bond in mol.GetBonds():
 
@@ -87,16 +143,18 @@ def oemol_to_openmmTop(mol):
             if oe_bond.IsAromatic():
                 oe_bond.SetType("Aromatic")
                 omm_bond_type = "Aromatic"
-            elif oe_bond.GetOrder() == 1:
-                oe_bond.SetType("Single")
-                omm_bond_type = "Single"
             elif oe_bond.GetOrder() == 2:
                 oe_bond.SetType("Double")
                 omm_bond_type = "Double"
             elif oe_bond.GetOrder() == 3:
                 oe_bond.SetType("Triple")
                 omm_bond_type = "Triple"
-            # Amide bond is missing ????
+            elif IsAmideBond(oe_bond):
+                oe_bond.SetType("Amide")
+                omm_bond_type = "Amide"
+            elif oe_bond.GetOrder() == 1:
+                oe_bond.SetType("Single")
+                omm_bond_type = "Single"
             else:
                 omm_bond_type = None
 
@@ -113,7 +171,7 @@ def oemol_to_openmmTop(mol):
     return topology, positions
 
 
-def openmmTop_to_oemol(topology, positions):
+def openmmTop_to_oemol(topology, positions, verbose=False):
     """
     This function converts an OpenMM topology in an OEMol
 

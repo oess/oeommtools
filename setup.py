@@ -28,7 +28,7 @@ the OE Toolkit with the OpenMM API
 
 setup(
     name                 ='oeommtools',
-    version              ='0.0.6',
+    version              ='0.0.7',
     description          ='OpenEye OpenMM Tools',
     long_description     =descr,
     url                  ='https://github.com/nividic/oeommtools',

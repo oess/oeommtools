@@ -195,7 +195,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
                 oechem.OEWriteConstMolecule(ofs, oe_ions[i])
 
     # Solvent smiles string parsing
-    char_set = string.ascii_uppercase + string.digits
+    char_set = string.ascii_uppercase
 
     # Add salt to the solution
     salt_sum_wgt_n_salt = 0.0 * unit.grams/unit.mole
@@ -424,14 +424,14 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
         file_handle.write(body)
 
     # Call Packmol
-    if verbose == False:
+    if not verbose:
         mute_output = open(os.devnull, 'w')
         with open(packmol_filename, 'r') as file_handle:
             subprocess.check_call(['packmol'], stdin=file_handle, stdout=mute_output, stderr=mute_output)
     else: 
          with open(packmol_filename, 'r') as file_handle:
             subprocess.check_call(['packmol'], stdin=file_handle)
-    
+
     # Read in the Packmol solvated system
     solvated = oechem.OEMol()
     ifs = oechem.oemolistream(mixture_pdb)
@@ -464,7 +464,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     solvated_system = solute.CreateCopy()
     oechem.OEAddMols(solvated_system, components)
 
-    #Set Title
+    # Set Title
     solvated_system.SetTitle(solute.GetTitle())
 
     # Cleaning

@@ -66,8 +66,8 @@ def oemol_to_openmmTop(mol):
                     oe_atom_to_openmm_at[oe_at] = openmm_at
 
     if topology.getNumAtoms() != mol.NumAtoms():
-        oechem.OEThrow.Error("OpenMM topology and OEMol number of atoms mismatching: "
-                             "OpenMM = {} vs OEMol  = {}".format(topology.getNumAtoms(), mol.NumAtoms()))
+        raise ValueError("OpenMM topology and OEMol number of atoms mismatching: "
+                         "OpenMM = {} vs OEMol  = {}".format(topology.getNumAtoms(), mol.NumAtoms()))
 
     # Count the number of bonds in the openmm topology
     omm_bond_count = 0
@@ -162,8 +162,8 @@ def oemol_to_openmmTop(mol):
                          type=omm_bond_type, order=oe_bond.GetOrder())
 
     if omm_bond_count != mol.NumBonds():
-        oechem.OEThrow.Error("OpenMM topology and OEMol number of bonds mismatching: "
-                             "OpenMM = {} vs OEMol  = {}".format(omm_bond_count, mol.NumBonds()))
+        raise ValueError("OpenMM topology and OEMol number of bonds mismatching: "
+                         "OpenMM = {} vs OEMol  = {}".format(omm_bond_count, mol.NumBonds()))
 
     dic = mol.GetCoords()
     positions = [Vec3(v[0], v[1], v[2]) for k, v in dic.items()] * unit.angstrom
@@ -230,8 +230,8 @@ def openmmTop_to_oemol(topology, positions, verbose=False):
                 openmm_atom_to_oe_atom[openmm_at] = oe_atom
 
     if topology.getNumAtoms() != oe_mol.NumAtoms():
-        oechem.OEThrow.Error("OpenMM topology and OEMol number of atoms mismatching: "
-                             "OpenMM = {} vs OEMol  = {}".format(topology.getNumAtoms(), oe_mol.NumAtoms()))
+        raise ValueError("OpenMM topology and OEMol number of atoms mismatching: "
+                         "OpenMM = {} vs OEMol  = {}".format(topology.getNumAtoms(), oe_mol.NumAtoms()))
 
     # Count the number of bonds in the openmm topology
     omm_bond_count = 0
@@ -269,8 +269,8 @@ def openmmTop_to_oemol(topology, positions, verbose=False):
                 oe_bond.SetType("")
 
     if omm_bond_count != oe_mol.NumBonds():
-        oechem.OEThrow.Erorr("OpenMM topology and OEMol number of bonds mismatching: "
-                             "OpenMM = {} vs OEMol  = {}".format(omm_bond_count, oe_mol.NumBonds()))
+        raise ValueError("OpenMM topology and OEMol number of bonds mismatching: "
+                         "OpenMM = {} vs OEMol  = {}".format(omm_bond_count, oe_mol.NumBonds()))
 
     # Set the OEMol positions
     pos = positions.in_units_of(unit.angstrom) / unit.angstrom
@@ -414,7 +414,7 @@ def sanitizeOEMolecule(molecule):
 
     # Check if the molecule has 3D coordinates
     if not oechem.OEGetDimensionFromCoords(mol_copy):
-        oechem.OEThrow.Fatal("The molecule coordinates are set to zero")
+        raise ValueError("The molecule coordinates are set to zero")
     # Check if the molecule has hydrogens
     if not oechem.OEHasExplicitHydrogens(mol_copy):
         oechem.OEAddExplicitHydrogens(mol_copy)
@@ -615,7 +615,7 @@ def select_oemol_atom_idx_by_language(system, mask=''):
 
         # Define the system fragments
         if not oechem.OEGetMolComplexFragments(frags, system, opt):
-            oechem.OEThrow.Fatal('Unable to generate the system fragments')
+            raise ValueError('Unable to generate the system fragments')
 
         # Set empty OEMol containers
         prot = oechem.OEMol()
@@ -626,7 +626,7 @@ def select_oemol_atom_idx_by_language(system, mask=''):
         # Split the protein from the system
         atommap = oechem.OEAtomArray(system.GetMaxAtomIdx())
         if not oechem.OECombineMolComplexFragments(prot, frags, opt, opt.GetProteinFilter(), atommap):
-            oechem.OEThrow.Fatal('Unable to split the Protein')
+            raise ValueError('Unable to split the Protein')
         # Populate the protein set and the protein carbon alpha set
         pred = oechem.OEIsAlphaCarbon()
         for sys_at in system.GetAtoms():
@@ -642,7 +642,7 @@ def select_oemol_atom_idx_by_language(system, mask=''):
         # Split the ligand from the system
         atommap = oechem.OEAtomArray(system.GetMaxAtomIdx())
         if not oechem.OECombineMolComplexFragments(lig, frags, opt, opt.GetLigandFilter(), atommap):
-            oechem.OEThrow.Fatal('Unable to split the Ligand')
+            raise ValueError('Unable to split the Ligand')
         # Populate the ligand set
         for sys_at in system.GetAtoms():
             sys_idx = sys_at.GetIdx()
@@ -654,7 +654,7 @@ def select_oemol_atom_idx_by_language(system, mask=''):
         # Split the water from the system
         atommap = oechem.OEAtomArray(system.GetMaxAtomIdx())
         if not oechem.OECombineMolComplexFragments(wat, frags, opt, opt.GetWaterFilter(), atommap):
-            oechem.OEThrow.Fatal('Unable to split the Water')
+            raise ValueError('Unable to split the Water')
         # Populate the water set
         for sys_at in system.GetAtoms():
             sys_idx = sys_at.GetIdx()
@@ -666,7 +666,7 @@ def select_oemol_atom_idx_by_language(system, mask=''):
         # Split the excipients from the system
         atommap = oechem.OEAtomArray(system.GetMaxAtomIdx())
         if not oechem.OECombineMolComplexFragments(excp, frags, opt, opt.GetOtherFilter(), atommap):
-             oechem.OEThrow.Fatal('Unable to split the Excipients')
+            raise ValueError('Unable to split the Excipients')
         # Populate the excipient set
         for sys_at in system.GetAtoms():
             sys_idx = sys_at.GetIdx()
@@ -688,8 +688,8 @@ def select_oemol_atom_idx_by_language(system, mask=''):
         system_set = prot_set | lig_set | excp_set | wat_set
 
         if len(system_set) != system.NumAtoms():
-            oechem.OEThrow.Fatal("The total system atom number {} is different "
-                                 "from its set representation {}".format(system.NumAtoms(), system_set))
+            raise ValueError("The total system atom number {} is different "
+                             "from its set representation {}".format(system.NumAtoms(), system_set))
 
         # The dictionary is used to link the token keywords to the created molecule sets
         dic_set = {'ligand': lig_set, 'protein': prot_set, 'ca_protein': ca_prot_set,
@@ -966,7 +966,7 @@ def split(complex, ligand_res_name='LIG'):
 
     # Splitting the system
     if not oechem.OESplitMolComplex(lig, prot, wat, other, complex, opt):
-        oechem.OEThrow.Fatal('Unable to split the complex')
+        raise ValueError('Unable to split the complex')
         
     # At this point prot contains the protein, lig contains the ligand,
     # wat contains the water and excipients contains the excipients

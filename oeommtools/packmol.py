@@ -89,8 +89,8 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
 
     # If the smiles string and mole fractions lists have different lengths raise an error
     if len(solvents) != len(fractions):
-        oechem.OEThrow.Fatal("Selected solvent number and selected molar fraction number mismatch: {} vs {}"
-                             .format(len(solvents), len(fractions)))
+        raise ValueError("Selected solvent number and selected molar fraction number mismatch: {} vs {}"
+                         .format(len(solvents), len(fractions)))
 
     # Remove smiles string with 0.0 mole fraction
     solvent_smiles = [solvents[i] for i, v in enumerate(fractions) if fractions[i]]
@@ -98,14 +98,14 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
 
     # Mole fractions are non-negative numbers
     if any([v < 0.0 for v in mol_fractions]):
-        oechem.OEThrow.Fatal("Error: Mole fractions are non-negative real numbers")
+        raise ValueError("Error: Mole fractions are non-negative real numbers")
 
     # Mole fractions must sum up to 1.0
     if abs(sum(mol_fractions) - 1.0) > 0.001:
-        oechem.OEThrow.Fatal("Error: Mole fractions do not sum up to 1.0")
+        oechem.OEThrow.Error("Error: Mole fractions do not sum up to 1.0")
 
     if geometry not in ['box', 'sphere']:
-        oechem.OEThrow.Fatal("Error geometry: the supported geometries are box and sphere not {}".format(geometry))
+        raise ValueError("Error geometry: the supported geometries are box and sphere not {}".format(geometry))
 
     # Set Units
     density = density * unit.grams/unit.milliliter
@@ -167,12 +167,12 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
             for sm in ions_smiles:
                 mol = oechem.OEMol()
                 if not oechem.OESmilesToMol(mol, sm):
-                    oechem.OEThrow.Fatal("Error counter ions: SMILES string parsing fails for the string: {}".format(sm))
+                    raise ValueError("Error counter ions: SMILES string parsing fails for the string: {}".format(sm))
 
                 # Generate conformer
                 if not omega(mol):
-                    oechem.OEThrow.Fatal(
-                        "Error counter ions: Conformer generation fails for the molecule with smiles string: {}".format(sm))
+                    raise ValueError("Error counter ions: Conformer generation fails for the molecule with "
+                                     "smiles string: {}".format(sm))
 
                 oe_ions.append(mol)
 
@@ -209,12 +209,12 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
         for sm in salt_smiles:
             mol_salt = oechem.OEMol()
             if not oechem.OESmilesToMol(mol_salt, sm):
-                oechem.OEThrow.Fatal("Error salt: SMILES string parsing fails for the string: {}".format(sm))
+                raise ValueError("Error salt: SMILES string parsing fails for the string: {}".format(sm))
 
             # Generate conformer
             if not omega(mol_salt):
-                oechem.OEThrow.Fatal(
-                    "Error salt: Conformer generation fails for the molecule with smiles string: {}".format(sm))
+                raise ValueError("Error salt: Conformer generation fails for the "
+                                 "molecule with smiles string: {}".format(sm))
 
             # Unique 3 code letter are set as solvent residue names
             solv_id = ''.join(random.sample(char_set * 3, 3))
@@ -263,12 +263,12 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
         mol_sol = oechem.OEMol()
 
         if not oechem.OESmilesToMol(mol_sol, sm):
-            oechem.OEThrow.Fatal("Error solvent: SMILES string parsing fails for the string: {}".format(sm))
+            raise ValueError("Error solvent: SMILES string parsing fails for the string: {}".format(sm))
 
         # Generate conformer
         if not omega(mol_sol):
-            oechem.OEThrow.Fatal("Error solvent: Conformer generation fails for "
-                                 "the molecule with smiles string: {}".format(sm))
+            raise ValueError("Error solvent: Conformer generation fails for "
+                             "the molecule with smiles string: {}".format(sm))
 
         # Unique 3 code letter are set as solvent residue names
         solv_id = ''.join(random.sample(char_set*3, 3))
@@ -315,7 +315,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     n_monomers = [int(round(mf*div)) for mf in mol_fractions]
 
     if not all([nm > 0 for nm in n_monomers]):
-        oechem.OEThrow.Fatal("Error negative number of solvent components: the density could be too low")
+        raise ValueError("Error negative number of solvent components: the density could be too low")
 
     # for i in range(0, len(solvent_smiles)):
     #     print("Number of molecules for the component {} = {}".format(solvent_smiles[i], n_monomers[i]))
@@ -428,8 +428,8 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
         mute_output = open(os.devnull, 'w')
         with open(packmol_filename, 'r') as file_handle:
             subprocess.check_call(['packmol'], stdin=file_handle, stdout=mute_output, stderr=mute_output)
-    else: 
-         with open(packmol_filename, 'r') as file_handle:
+    else:
+        with open(packmol_filename, 'r') as file_handle:
             subprocess.check_call(['packmol'], stdin=file_handle)
 
     # Read in the Packmol solvated system
@@ -488,9 +488,8 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     # Threshold checking
     ths = 0.1 * unit.gram/unit.milliliter
     if not abs(density - density_mix.in_units_of(unit.gram/unit.milliliter)) < ths:
-        raise oechem.OEThrow.Fatal("Error: the computed density does not match "
-                                   "the selected density {} vs {}"
-                                   .format(density_mix, density))
+        raise ValueError("Error: the computed density does not match the selected density {} vs {}"
+                         .format(density_mix, density))
 
     if geometry == 'box':
         # Define the box vector and attached it as SD tag to the solvated system

@@ -320,7 +320,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     # for i in range(0, len(solvent_smiles)):
     #     print("Number of molecules for the component {} = {}".format(solvent_smiles[i], n_monomers[i]))
 
-    # Packmol Configuration files setting
+    # Packmol Configuration file setting
     if close_solvent:
         header_template = """\n# Mixture\ntolerance {}\nfiletype pdb\noutput {}\nadd_amber_ter\navoid_overlap no"""
     else:
@@ -336,101 +336,102 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
         solvent_template = """\nstructure {}\nnumber {}\ninside sphere {:0.3f} {:0.3f} {:0.3f} {:0.3f}\
         \nchain !\nresnumbers 3\nend structure"""
 
-    # Create solvents .pdb files
-    solvent_smiles_pdbs = []
-    for i in range(0, len(solvent_smiles)):
-        pdb_name = os.path.basename(tempfile.mktemp(suffix='.pdb'))
-        pdb_name = solvent_smiles[i] + '_' + pdb_name
-        solvent_smiles_pdbs.append(pdb_name)
+    with tempfile.TemporaryDirectory() as output_directory:
+        os.chdir(output_directory)
+        # Create solvents .pdb files
+        solvent_smiles_pdbs = []
+        for i in range(0, len(solvent_smiles)):
+            pdb_name = os.path.basename(tempfile.mktemp(suffix='.pdb'))
+            solvent_smiles_pdbs.append(pdb_name)
 
-    for i in range(0, len(solvent_smiles)):
-        ofs = oechem.oemolostream(solvent_smiles_pdbs[i])
-        oechem.OEWriteConstMolecule(ofs, oe_solvents[i])
+        for i in range(0, len(solvent_smiles)):
+            ofs = oechem.oemolostream(solvent_smiles_pdbs[i])
+            oechem.OEWriteConstMolecule(ofs, oe_solvents[i])
 
-    solute_pdb = 'solute'+'_'+os.path.basename(tempfile.mktemp(suffix='.pdb'))
-    ofs = oechem.oemolostream(solute_pdb)
-    oechem.OEWriteConstMolecule(ofs, solute)
+        solute_pdb = 'solute' + '_' + os.path.basename(tempfile.mktemp(suffix='.pdb'))
+        ofs = oechem.oemolostream(solute_pdb)
+        oechem.OEWriteConstMolecule(ofs, solute)
 
-    # Write Packmol header section
-    mixture_pdb = 'mixture'+'_'+os.path.basename(tempfile.mktemp(suffix='.pdb'))
-    body = header_template.format(distance_between_atoms, mixture_pdb)
-    # Write Packmol configuration file solute section
-    body += solute_template.format(solute_pdb)
+        # Write Packmol header section
+        mixture_pdb = 'mixture' + '_' + os.path.basename(tempfile.mktemp(suffix='.pdb'))
+        body = header_template.format(distance_between_atoms, mixture_pdb)
+        # Write Packmol configuration file solute section
+        body += solute_template.format(solute_pdb)
 
-    # The solute is centered inside the box
-    xc = (BB_solute[0][0]+BB_solute[1][0])/2.
-    yc = (BB_solute[0][1]+BB_solute[1][1])/2.
-    zc = (BB_solute[0][2]+BB_solute[1][2])/2.
+        # The solute is centered inside the box
+        xc = (BB_solute[0][0] + BB_solute[1][0]) / 2.
+        yc = (BB_solute[0][1] + BB_solute[1][1]) / 2.
+        zc = (BB_solute[0][2] + BB_solute[1][2]) / 2.
 
-    # Correct for periodic box conditions to avoid
-    # steric clashes at the box edges
-    pbc_correction = 1.0 * unit.angstrom
+        # Correct for periodic box conditions to avoid
+        # steric clashes at the box edges
+        pbc_correction = 1.0 * unit.angstrom
 
-    xmin = xc - ((box_edge - pbc_correction)/2.)/unit.angstrom
-    xmax = xc + ((box_edge - pbc_correction)/2.)/unit.angstrom
-    ymin = yc - ((box_edge - pbc_correction)/2.)/unit.angstrom
-    ymax = yc + ((box_edge - pbc_correction)/2.)/unit.angstrom
-    zmin = zc - ((box_edge - pbc_correction)/2.)/unit.angstrom
-    zmax = zc + ((box_edge - pbc_correction)/2.)/unit.angstrom
+        xmin = xc - ((box_edge - pbc_correction) / 2.) / unit.angstrom
+        xmax = xc + ((box_edge - pbc_correction) / 2.) / unit.angstrom
+        ymin = yc - ((box_edge - pbc_correction) / 2.) / unit.angstrom
+        ymax = yc + ((box_edge - pbc_correction) / 2.) / unit.angstrom
+        zmin = zc - ((box_edge - pbc_correction) / 2.) / unit.angstrom
+        zmax = zc + ((box_edge - pbc_correction) / 2.) / unit.angstrom
 
-    # Packmol setting for the solvent section
-    body += '\n\n# Solvent'
-    for i in range(0, len(solvent_smiles)):
-        if geometry == 'box':
-            body += solvent_template.format(solvent_smiles_pdbs[i],
-                                            n_monomers[i],
-                                            xmin, ymin, zmin,
-                                            xmax, ymax, zmax)
-        if geometry == 'sphere':
-            body += solvent_template.format(solvent_smiles_pdbs[i],
-                                            n_monomers[i],
-                                            xc, yc, zc,
-                                            0.5*box_edge/unit.angstrom)
-
-    # Packmol setting for the salt section
-    if salt_concentration > 0.0*unit.millimolar and n_salt >= 1:
-        body += '\n\n# Salt'
-        for i in range(0, len(salt_smiles)):
+        # Packmol setting for the solvent section
+        body += '\n\n# Solvent'
+        for i in range(0, len(solvent_smiles)):
             if geometry == 'box':
-                body += solvent_template.format(salt_smiles_pdbs[i],
-                                                int(round(n_salt)),
+                body += solvent_template.format(solvent_smiles_pdbs[i],
+                                                n_monomers[i],
                                                 xmin, ymin, zmin,
                                                 xmax, ymax, zmax)
             if geometry == 'sphere':
-                body += solvent_template.format(salt_smiles_pdbs[i],
-                                                int(round(n_salt)),
+                body += solvent_template.format(solvent_smiles_pdbs[i],
+                                                n_monomers[i],
                                                 xc, yc, zc,
-                                                0.5*box_edge/unit.angstrom)
+                                                0.5 * box_edge / unit.angstrom)
 
-    # Packmol setting for the ions section
-    if neutralize_solute and n_ions >= 1:
-        body += '\n\n# Counter Ions'
-        for i in range(0, len(ions_smiles)):
-            if geometry == 'box':
-                body += solvent_template.format(ions_smiles_pdbs[i],
-                                                n_ions,
-                                                xmin, ymin, zmin,
-                                                xmax, ymax, zmax)
-            if geometry == 'sphere':
-                body += solvent_template.format(ions_smiles_pdbs[i],
-                                                n_ions,
-                                                xc, yc, zc,
-                                                0.5*box_edge/unit.angstrom)
+        # Packmol setting for the salt section
+        if salt_concentration > 0.0 * unit.millimolar and n_salt >= 1:
+            body += '\n\n# Salt'
+            for i in range(0, len(salt_smiles)):
+                if geometry == 'box':
+                    body += solvent_template.format(salt_smiles_pdbs[i],
+                                                    int(round(n_salt)),
+                                                    xmin, ymin, zmin,
+                                                    xmax, ymax, zmax)
+                if geometry == 'sphere':
+                    body += solvent_template.format(salt_smiles_pdbs[i],
+                                                    int(round(n_salt)),
+                                                    xc, yc, zc,
+                                                    0.5 * box_edge / unit.angstrom)
 
-    # Packmol configuration file
-    packmol_filename = os.path.basename(tempfile.mktemp(suffix='.inp'))
+        # Packmol setting for the ions section
+        if neutralize_solute and n_ions >= 1:
+            body += '\n\n# Counter Ions'
+            for i in range(0, len(ions_smiles)):
+                if geometry == 'box':
+                    body += solvent_template.format(ions_smiles_pdbs[i],
+                                                    n_ions,
+                                                    xmin, ymin, zmin,
+                                                    xmax, ymax, zmax)
+                if geometry == 'sphere':
+                    body += solvent_template.format(ions_smiles_pdbs[i],
+                                                    n_ions,
+                                                    xc, yc, zc,
+                                                    0.5 * box_edge / unit.angstrom)
 
-    with open(packmol_filename, 'w') as file_handle:
-        file_handle.write(body)
+        # Packmol configuration file
+        packmol_filename = os.path.basename(tempfile.mktemp(suffix='.inp'))
 
-    # Call Packmol
-    if not verbose:
-        mute_output = open(os.devnull, 'w')
-        with open(packmol_filename, 'r') as file_handle:
-            subprocess.check_call(['packmol'], stdin=file_handle, stdout=mute_output, stderr=mute_output)
-    else:
-        with open(packmol_filename, 'r') as file_handle:
-            subprocess.check_call(['packmol'], stdin=file_handle)
+        with open(packmol_filename, 'w') as file_handle:
+            file_handle.write(body)
+
+        # Call Packmol
+        if not verbose:
+            mute_output = open(os.devnull, 'w')
+            with open(packmol_filename, 'r') as file_handle:
+                subprocess.check_call(['packmol'], stdin=file_handle, stdout=mute_output, stderr=mute_output)
+        else:
+            with open(packmol_filename, 'r') as file_handle:
+                subprocess.check_call(['packmol'], stdin=file_handle)
 
     # Read in the Packmol solvated system
     solvated = oechem.OEMol()
@@ -467,20 +468,6 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     # Set Title
     solvated_system.SetTitle(solute.GetTitle())
 
-    # Cleaning
-    to_delete = solvent_smiles_pdbs+[packmol_filename, solute_pdb, mixture_pdb]
-
-    if salt_concentration > 0.0*unit.millimolar and n_salt >= 1:
-        to_delete += salt_smiles_pdbs
-    if neutralize_solute and n_ions >= 1:
-        to_delete += ions_smiles_pdbs
-
-    for fn in to_delete:
-        try:
-            os.remove(fn)
-        except:
-            pass
-
     # Calculate the solution total density
     total_wgt = oechem.OECalculateMolecularWeight(solvated_system)*unit.gram/unit.mole
     density_mix = (1/unit.AVOGADRO_CONSTANT_NA)*total_wgt/Volume
@@ -488,8 +475,8 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     # Threshold checking
     ths = 0.1 * unit.gram/unit.milliliter
     if not abs(density - density_mix.in_units_of(unit.gram/unit.milliliter)) < ths:
-        raise ValueError("Error: the computed density does not match the selected density {} vs {}"
-                         .format(density_mix, density))
+        raise ValueError("Error: the computed density for the solute {} does not match the selected density {} vs {}"
+                         .format(solute.GetTitle(), density_mix, density))
 
     if geometry == 'box':
         # Define the box vector and attached it as SD tag to the solvated system

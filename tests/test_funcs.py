@@ -51,7 +51,7 @@ class ConversionTester(unittest.TestCase):
             # OE atoms
             at0_idx = bond.GetBgnIdx()
             at1_idx = bond.GetEndIdx()
-            if at0_idx < at1_idx: 
+            if at0_idx < at1_idx:
                 dic_bond_oe[(at0_idx, at1_idx)] = (bond.GetOrder(), bond.GetType())
             else:
                 dic_bond_oe[(at1_idx, at0_idx)] = (bond.GetOrder(), bond.GetType())
@@ -60,12 +60,12 @@ class ConversionTester(unittest.TestCase):
 
     def test_openmmTop_to_oemol(self):
         protein_fn ='tests/data/T4-protein.pdb'
-        
+
         pdb = app.PDBFile(protein_fn)
 
         oe_mol = utils.openmmTop_to_oemol(pdb.topology, pdb.positions)
 
-        # Assert 
+        # Assert
         self.assertEqual(pdb.topology.getNumAtoms(), oe_mol.NumAtoms())
 
         for (op_at, oe_at) in zip(pdb.topology.atoms(), oe_mol.GetAtoms()):
@@ -242,6 +242,7 @@ class RemoveWaterIonsTester(unittest.TestCase):
         self.assertEquals(nla, 43)
         self.assertEquals(noa, 0)
         self.assertEquals(nwa, 0)
+
 
 if __name__ == "__main__":
         unittest.main()

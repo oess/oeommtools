@@ -127,6 +127,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     # Omega engine is used to generate conformations
     omegaOpts = oeomega.OEOmegaOptions()
     omegaOpts.SetMaxConfs(1)
+    omegaOpts.SetStrictStereo(False)
     omega = oeomega.OEOmega(omegaOpts)
 
     # Create a string code to identify the solute residues. The code ID used is based

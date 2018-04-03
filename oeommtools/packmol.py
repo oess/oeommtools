@@ -434,9 +434,13 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
 
     # Read in the Packmol solvated system
     solvated = oechem.OEMol()
+
+    if os.path.exists(mixture_pdb+'_FORCED'):
+        os.rename(mixture_pdb+'_FORCED', mixture_pdb)
+        print("Warning: Packing solution is not optimal")
+
     ifs = oechem.oemolistream(mixture_pdb)
     oechem.OEReadMolecule(ifs, solvated)
-
 
     # To avoid to change the user oemol starting solute by reading in
     # the generated mixture pdb file and loosing molecule info, the

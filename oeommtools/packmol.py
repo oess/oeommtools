@@ -142,6 +142,9 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
                 oe_res = hres.GetOEResidue()
                 solute_resid_list.append(str(oe_res.GetResidueNumber())+oe_res.GetName()+chain.GetChainID())
 
+    # Solvent component list_names
+    solvent_resid_dic_names = dict()
+
     # Neutralize solute
     ion_sum_wgt_n_ions = 0.0*unit.grams/unit.mole
     if neutralize_solute:
@@ -164,37 +167,42 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
 
         # print("Counter ions to add = {} of {}".format(n_ions, ions_smiles[0]))
 
-    # Ions
-    if n_ions >= 1:
-        for sm in ions_smiles:
-            mol = oechem.OEMol()
-            if not oechem.OESmilesToMol(mol, sm):
-                raise ValueError("Error counter ions: SMILES string parsing fails for the string: {}".format(sm))
+        # Ions
+        if n_ions >= 1:
+            for sm in ions_smiles:
+                mol = oechem.OEMol()
+                if not oechem.OESmilesToMol(mol, sm):
+                    raise ValueError("Error counter ions: SMILES string parsing fails for the string: {}".format(sm))
 
-            # Generate conformer
-            if not omega(mol):
-                raise ValueError("Error counter ions: Conformer generation fails for the molecule with "
-                                 "smiles string: {}".format(sm))
+                # Generate conformer
+                if not omega(mol):
+                    raise ValueError("Error counter ions: Conformer generation fails for the molecule with "
+                                     "smiles string: {}".format(sm))
 
-            oe_ions.append(mol)
+                oe_ions.append(mol)
 
-        ion_sum_wgt = 0.0 * unit.grams / unit.mole
-        for ion in oe_ions:
-            # Molecular weight
-            ion_sum_wgt += oechem.OECalculateMolecularWeight(ion) * unit.grams / unit.mole
+                if sm == '[Na+]':
+                    solvent_resid_dic_names[' NA'] = mol
+                else:
+                    solvent_resid_dic_names[' CL'] = mol
 
-        ion_sum_wgt_n_ions = ion_sum_wgt * n_ions
+            ion_sum_wgt = 0.0 * unit.grams / unit.mole
+            for ion in oe_ions:
+                # Molecular weight
+                ion_sum_wgt += oechem.OECalculateMolecularWeight(ion) * unit.grams / unit.mole
 
-        # Create ions .pdb files
-        ions_smiles_pdbs = []
-        for i in range(0, len(ions_smiles)):
-            pdb_name = os.path.basename(tempfile.mktemp(suffix='.pdb'))
-            pdb_name = ions_smiles[i] + '_' + pdb_name
-            ions_smiles_pdbs.append(pdb_name)
+            ion_sum_wgt_n_ions = ion_sum_wgt * n_ions
 
-        for i in range(0, len(ions_smiles)):
-            ofs = oechem.oemolostream(ions_smiles_pdbs[i])
-            oechem.OEWriteConstMolecule(ofs, oe_ions[i])
+            # Create ions .pdb files
+            ions_smiles_pdbs = []
+            for i in range(0, len(ions_smiles)):
+                pdb_name = os.path.basename(tempfile.mktemp(suffix='.pdb'))
+                pdb_name = ions_smiles[i] + '_' + pdb_name
+                ions_smiles_pdbs.append(pdb_name)
+
+            for i in range(0, len(ions_smiles)):
+                ofs = oechem.oemolostream(ions_smiles_pdbs[i])
+                oechem.OEWriteConstMolecule(ofs, oe_ions[i])
 
     # Add salts to the solution
 
@@ -229,7 +237,11 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
                 if res.GetName() == 'UNL':
                     res.SetName(solv_id)
                     oechem.OEAtomSetResidue(atmol, res)
+                    if solv_id not in solvent_resid_dic_names:
+                        solvent_resid_dic_names[solv_id] = mol_salt
                 else:
+                    if res.GetName() not in solvent_resid_dic_names:
+                        solvent_resid_dic_names[res.GetName()] = mol_salt
                     break
 
             oe_salt.append(mol_salt)
@@ -282,7 +294,11 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
             if res.GetName() == 'UNL':
                 res.SetName(solv_id)
                 oechem.OEAtomSetResidue(atmol, res)
+                if solv_id not in solvent_resid_dic_names:
+                    solvent_resid_dic_names[solv_id] = mol_sol
             else:
+                if res.GetName() not in solvent_resid_dic_names:
+                    solvent_resid_dic_names[res.GetName()] = mol_sol
                 break
 
         oe_solvents.append(mol_sol)
@@ -451,12 +467,19 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     # by checking the previous solute generated ID: id+resname+chainID
     hv_solvated = oechem.OEHierView(solvated, oechem.OEAssumption_BondedResidue +
                                     oechem.OEAssumption_ResPerceived)
+
+    # This molecule will hold the solvent molecules generated directly from
+    # the omega conformers. This is useful to avoid problems related to read in
+    # the solvent molecules from pdb files and triggering unwanted perceiving actions
+    new_components = oechem.OEMol()
+
     bv = oechem.OEBitVector(solvated.GetMaxAtomIdx())
     for chain in hv_solvated.GetChains():
         for frag in chain.GetFragments():
             for hres in frag.GetResidues():
                 oe_res = hres.GetOEResidue()
                 if str(oe_res.GetResidueNumber())+oe_res.GetName()+chain.GetChainID() not in solute_resid_list:
+                    oechem.OEAddMols(new_components, solvent_resid_dic_names[oe_res.GetName()])
                     atms = hres.GetAtoms()
                     for at in atms:
                         bv.SetBitOn(at.GetIdx())
@@ -465,9 +488,14 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     components = oechem.OEMol()
     oechem.OESubsetMol(components, solvated, pred)
 
+    new_components.SetCoords(components.GetCoords())
+
+    # This is necessary otherwise ust one big residue is created
+    oechem.OEPerceiveResidues(new_components)
+
     # Add the solvent molecules to the solute copy
     solvated_system = solute.CreateCopy()
-    oechem.OEAddMols(solvated_system, components)
+    oechem.OEAddMols(solvated_system, new_components)
 
     # Set Title
     solvated_system.SetTitle(solute.GetTitle())

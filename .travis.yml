@@ -15,7 +15,7 @@ env:
   global:
     - ORGNAME="omnia"
     - PACKAGENAME="oeommtools"
-    - VERSION="0.1.2"
+    - VERSION="0.1.3"
     - OE_LICENSE="$HOME/oe_license.txt"
     - DEV_TOOLS="devtools/conda-recipe"
     - USER="OpenEye"

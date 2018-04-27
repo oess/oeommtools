@@ -365,7 +365,11 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
 
     solute_pdb = 'solute' + '_' + os.path.basename(tempfile.mktemp(suffix='.pdb'))
     ofs = oechem.oemolostream(solute_pdb)
-    oechem.OEWriteConstMolecule(ofs, solute)
+
+    if solute.GetMaxConfIdx() > 1:
+        raise ValueError("Solutes with multiple conformers are not supported")
+    else:
+        oechem.OEWriteConstMolecule(ofs, solute)
 
     # Write Packmol header section
     mixture_pdb = 'mixture' + '_' + os.path.basename(tempfile.mktemp(suffix='.pdb'))
@@ -490,7 +494,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
 
     new_components.SetCoords(components.GetCoords())
 
-    # This is necessary otherwise ust one big residue is created
+    # This is necessary otherwise just one big residue is created
     oechem.OEPerceiveResidues(new_components)
 
     # Add the solvent molecules to the solute copy
@@ -531,7 +535,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
                        Vec3(0.0, box_edge/unit.angstrom, 0.0),
                        Vec3(0.0, 0.0, box_edge/unit.angstrom))*unit.angstrom
 
-        box_vectors = data_utils.PackageOEMol.encodePyObj(box_vectors)
+        box_vectors = data_utils.encodePyObj(box_vectors)
         solvated_system.SetData(oechem.OEGetTag('box_vectors'), box_vectors)
 
     return solvated_system

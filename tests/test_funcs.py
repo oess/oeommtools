@@ -195,7 +195,7 @@ class SolvatePackmolTester(unittest.TestCase):
         self.assertEquals(nwa, 48279)
 
         box_vectors = solv_complex.GetData('box_vectors')
-        box_vectors = data_utils.PackageOEMol.decodePyObj(box_vectors)
+        box_vectors = data_utils.decodePyObj(box_vectors)
         box_vectors = box_vectors.in_units_of(unit.nanometers)
 
         self.assertAlmostEqual(box_vectors[0][0] / unit.nanometers, 8.23, delta=0.01)

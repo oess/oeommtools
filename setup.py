@@ -6,7 +6,7 @@ You can install oeommtools with
 python setup.py install
 """
 
-import sys,os
+import sys, os
 from os.path import relpath, join
 
 from setuptools import setup, find_packages
@@ -28,7 +28,7 @@ the OE Toolkit with the OpenMM API
 
 setup(
     name                 ='oeommtools',
-    version              ='0.1.3',
+    version              ='0.1.4',
     description          ='OpenEye OpenMM Tools',
     long_description     =descr,
     url                  ='https://github.com/nividic/oeommtools',

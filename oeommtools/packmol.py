@@ -504,6 +504,18 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     # Set Title
     solvated_system.SetTitle(solute.GetTitle())
 
+    # Set ions resname to Na+ and Cl-
+    for at in solvated_system.GetAtoms():
+        res = oechem.OEAtomGetResidue(at)
+        if res.GetName() == ' NA':
+            res.SetName("Na+")
+            oechem.OEAtomSetResidue(atmol, res)
+        elif res.GetName() == ' CL':
+            res.SetName("Cl-")
+            oechem.OEAtomSetResidue(atmol, res)
+        else:
+            pass
+
     # Cleaning
     to_delete = solvent_pdbs+[packmol_filename, solute_pdb, mixture_pdb]
 

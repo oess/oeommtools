@@ -1,3 +1,5 @@
 include README.md
 include LICENCE
+include oeommtools/data/*
+
 recursive-include test  *

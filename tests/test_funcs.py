@@ -59,7 +59,7 @@ class ConversionTester(unittest.TestCase):
         self.assertEqual(dic_bond_openmm, dic_bond_oe)
 
     def test_openmmTop_to_oemol(self):
-        protein_fn ='tests/data/T4-protein.pdb'
+        protein_fn = 'tests/data/T4-protein.pdb'
 
         pdb = app.PDBFile(protein_fn)
 
@@ -87,7 +87,7 @@ class SelectionLanguageTester(unittest.TestCase):
     # Check Selection Language
     def test_selection_language(self):
 
-        fcomplex ="tests/data/pP38_lp38a_2x_complex.pdb"
+        fcomplex = "tests/data/pP38_lp38a_2x_complex.pdb"
         # Read OEMol molecule
         mol = oechem.OEMol()
         with oechem.oemolistream(fcomplex) as ifs:
@@ -174,6 +174,57 @@ class SolvatePackmolTester(unittest.TestCase):
                                          padding_distance=10.0,
                                          distance_between_atoms=2.0,
                                          solvents='[H]O[H]',
+                                         molar_fractions='1.0',
+                                         geometry='box',
+                                         close_solvent=True,
+                                         salt='[Na+], [Cl-]', salt_concentration=100.0,
+                                         neutralize_solute=True)
+
+        prot, lig, wat, other = utils.split(solv_complex)
+
+        npa = prot.GetMaxAtomIdx()
+        nla = lig.GetMaxAtomIdx()
+        noa = other.GetMaxAtomIdx()
+        nwa = wat.GetMaxAtomIdx()
+
+        self.assertEquals(npa, 6044)
+        self.assertEquals(nla, 0)
+        # Ions added to excipients
+        self.assertEquals(noa, 94)
+        # Water molecules added
+        self.assertEquals(nwa, 48279)
+
+        box_vectors = solv_complex.GetData('box_vectors')
+        box_vectors = data_utils.decodePyObj(box_vectors)
+        box_vectors = box_vectors.in_units_of(unit.nanometers)
+
+        self.assertAlmostEqual(box_vectors[0][0] / unit.nanometers, 8.23, delta=0.01)
+        self.assertEqual(box_vectors[0][1] / unit.nanometers, 0.0)
+        self.assertEqual(box_vectors[0][2] / unit.nanometers, 0.0)
+
+        self.assertAlmostEqual(box_vectors[1][1] / unit.nanometers, 8.23, delta=0.01)
+        self.assertEqual(box_vectors[1][0] / unit.nanometers, 0.0)
+        self.assertEqual(box_vectors[1][2] / unit.nanometers, 0.0)
+
+        self.assertAlmostEqual(box_vectors[2][2] / unit.nanometers, 8.23, delta=0.01)
+        self.assertEqual(box_vectors[2][0] / unit.nanometers, 0.0)
+        self.assertEqual(box_vectors[2][1] / unit.nanometers, 0.0)
+
+    def test_solvation_packmol_tip3p(self):
+        # Complex file name
+        fcomplex = "tests/data/Bace_protein.pdb"
+
+        # Read OEMol molecule
+        mol = oechem.OEMol()
+
+        with oechem.oemolistream(fcomplex) as ifs:
+            oechem.OEReadMolecule(ifs, mol)
+
+        # Solvate the system
+        solv_complex = packmol.oesolvate(mol, density=1.0,
+                                         padding_distance=10.0,
+                                         distance_between_atoms=2.0,
+                                         solvents='tip3p',
                                          molar_fractions='1.0',
                                          geometry='box',
                                          close_solvent=True,

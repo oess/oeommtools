@@ -45,6 +45,16 @@ def setversion(ctx, new_version):
     with open(fn, "w") as f:
         f.writelines(lines)
 
+    fn = os.path.join(PACKAGE_DIR, '.travis.yml')
+
+    with open(fn, "r") as f:
+        lines = f.readlines()
+
+    lines = ['    - VERSION="{}"\n'.format(new_version) if line.startswith("    - VERSION=") else line for line in lines]
+
+    with open(fn, "w") as f:
+        f.writelines(lines)
+
 
 @task
 def clean(ctx):

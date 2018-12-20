@@ -33,6 +33,7 @@ benzene = 'c1ccccc1'
 # Empty OEMol
 solute = oechem.OEMol()
 
+
 # Conformer generation
 omegaOpts = oeomega.OEOmegaOptions()
 omegaOpts.SetMaxConfs(1)

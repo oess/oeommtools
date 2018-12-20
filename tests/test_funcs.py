@@ -187,12 +187,12 @@ class SolvatePackmolTester(unittest.TestCase):
         noa = other.GetMaxAtomIdx()
         nwa = wat.GetMaxAtomIdx()
 
-        self.assertEquals(npa, 6044)
-        self.assertEquals(nla, 0)
+        self.assertEqual(npa, 6044)
+        self.assertEqual(nla, 0)
         # Ions added to excipients
-        self.assertEquals(noa, 94)
+        self.assertEqual(noa, 94)
         # Water molecules added
-        self.assertEquals(nwa, 48279)
+        self.assertEqual(nwa, 48279)
 
         box_vectors = solv_complex.GetData('box_vectors')
         box_vectors = data_utils.decodePyObj(box_vectors)
@@ -238,12 +238,12 @@ class SolvatePackmolTester(unittest.TestCase):
         noa = other.GetMaxAtomIdx()
         nwa = wat.GetMaxAtomIdx()
 
-        self.assertEquals(npa, 6044)
-        self.assertEquals(nla, 0)
+        self.assertEqual(npa, 6044)
+        self.assertEqual(nla, 0)
         # Ions added to excipients
-        self.assertEquals(noa, 94)
+        self.assertEqual(noa, 94)
         # Water molecules added
-        self.assertEquals(nwa, 48279)
+        self.assertEqual(nwa, 48279)
 
         box_vectors = solv_complex.GetData('box_vectors')
         box_vectors = data_utils.decodePyObj(box_vectors)
@@ -289,10 +289,10 @@ class RemoveWaterIonsTester(unittest.TestCase):
         noa = other.GetMaxAtomIdx()
         nwa = wat.GetMaxAtomIdx()
 
-        self.assertEquals(npa, 5629)
-        self.assertEquals(nla, 43)
-        self.assertEquals(noa, 0)
-        self.assertEquals(nwa, 0)
+        self.assertEqual(npa, 5629)
+        self.assertEqual(nla, 43)
+        self.assertEqual(noa, 0)
+        self.assertEqual(nwa, 0)
 
 
 if __name__ == "__main__":

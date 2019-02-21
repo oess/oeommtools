@@ -1,8 +1,7 @@
 COMPND    HOH
-HETATM    1  O   HOH     1      -7.336   0.430   6.058
-HETATM    2  H   HOH     1      -7.789  -0.296   5.586
-HETATM    3  H   HOH     1      -6.850  -0.048   6.757
+HETATM    1  O   HOH     1      11.058  15.764   5.610  1.00  0.00           O  
+HETATM    2  H   HOH     1      11.702  15.914   4.917  1.00  0.00           H  
+HETATM    3  H   HOH     1      11.392  16.256   6.359  1.00  0.00           H  
 CONECT    1    2    3
 CONECT    2    1
 CONECT    3    1
-END

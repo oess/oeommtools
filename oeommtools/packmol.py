@@ -20,7 +20,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
               solvents='tip3p', molar_fractions='1.0',
               geometry='box', close_solvent=True,
               salt='[Na+], [Cl-]', salt_concentration=0.0,
-              neutralize_solute=True, verbose=False, **kargs):
+              neutralize_solute=True, verbose=False, return_components=False, **kargs):
     """
     This function solvates the passed solute in a cubic box or a sphere by using Packmol. Packmol
     creates an initial point for molecular dynamics simulations by packing molecule in defined regions
@@ -58,13 +58,20 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
         Salt concentration in millimolar
     neutralize_solute: boolean
         If True counter-ions will be added to the solution to neutralize the solute
+    verbose: Bool
+        If True verbose mode is enabled
+    return_components: Bool
+        If True the added solvent molecules are also returned as OEMol
 
     Return:
     -------
     oe_mol: OEMol
         The solvated system. If the selected geometry is a box a SD tag with
         name 'box_vector' is attached the output molecule containing
-        the system box vectors
+        the system box vectors.
+    oe_mol_components: OEMol
+        If the return_components flag is True the added solvent molecules are
+        returned as an additional OEMol
     """
 
     def BoundingBox(molecule):
@@ -566,4 +573,8 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
         box_vectors = data_utils.encodePyObj(box_vectors)
         solvated_system.SetData(oechem.OEGetTag('box_vectors'), box_vectors)
 
-    return solvated_system
+    if return_components:
+        new_components.SetTitle(solute.GetTitle()+'_solvent_comp')
+        return solvated_system, new_components
+    else:
+        return solvated_system

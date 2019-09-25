@@ -520,6 +520,17 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     # This is necessary otherwise just one big residue is created
     oechem.OEPerceiveResidues(new_components)
 
+    # Set Water residue name to WAT and
+    # Packmol added solvent chain to !
+    for at in new_components.GetAtoms():
+        res = oechem.OEAtomGetResidue(at)
+
+        if res.GetName() == "HOH":
+            res.SetName("WAT")
+
+        res.SetChainID("Z")
+        oechem.OEAtomSetResidue(at, res)
+
     # Add the solvent molecules to the solute copy
     solvated_system = solute.CreateCopy()
     oechem.OEAddMols(solvated_system, new_components)

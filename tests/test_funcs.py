@@ -111,7 +111,7 @@ class SelectionLanguageTester(unittest.TestCase):
         ind_set = utils.select_oemol_atom_idx_by_language(mol, mask=mask)
         res_dic[mask] = ind_set
 
-        mask = 'cofactors'
+        mask = 'excipients'
         ind_set = utils.select_oemol_atom_idx_by_language(mol, mask=mask)
         res_dic[mask] = ind_set
 
@@ -192,7 +192,7 @@ class SolvatePackmolTester(unittest.TestCase):
         # Ions added to excipients
         self.assertEqual(noa, 94)
         # Water molecules added
-        self.assertEqual(nwa, 48279)
+        self.assertAlmostEqual(nwa, 48279, delta=90)
 
         box_vectors = solv_complex.GetData('box_vectors')
         box_vectors = data_utils.decodePyObj(box_vectors)
@@ -243,7 +243,7 @@ class SolvatePackmolTester(unittest.TestCase):
         # Ions added to excipients
         self.assertEqual(noa, 94)
         # Water molecules added
-        self.assertEqual(nwa, 48279)
+        self.assertAlmostEqual(nwa, 48279, delta=90)
 
         box_vectors = solv_complex.GetData('box_vectors')
         box_vectors = data_utils.decodePyObj(box_vectors)

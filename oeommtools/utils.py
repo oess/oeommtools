@@ -503,7 +503,7 @@ def select_oemol_atom_idx_by_language(system, mask=''):
     """
     This function selects the atom indexes from the passed oemol molecular complex
     by using  a defined language. The language allows the selection of the ligand,
-    protein, waters, ions, cofactors, residue numbers and distance selection. Logic 
+    protein, waters, mono-atomic ions, excipients, residue numbers and distance selection. Logic
     operators not, or, and, noh, diff, around can be used to refine the selection
 
     Parameters
@@ -516,10 +516,11 @@ def select_oemol_atom_idx_by_language(system, mask=''):
         (https://en.wikipedia.org/wiki/Backus–Naur_form) is defined by the python
         module pyparsing.
         The defined grammar tokens are: "ligand", "protein", "ca_protein" ,"water",
-        "ions","cofactors" and "resid chain1:res_idx1 chain2:res_idx2 ... res_idxn"
+        "ions", "excipients" and "resid chain1:res_idx1 chain2:res_idx2 ... res_idxn"
         that respectively define the ligand, the protein, carbon alpha protein atoms,
-        water molecules, ions, cofactors and residue numbers. The atom selection can
-        be refined by using the following operator tokens:
+        water molecules, ions, excipients (not protein, ligand, water or ions) and
+        residue numbers. The atom selection can be refined by using the following
+        operator tokens:
 
         "not" = invert selection
         "or" = add selections
@@ -538,7 +539,7 @@ def select_oemol_atom_idx_by_language(system, mask=''):
         Example of selection string:
         mask = "ligand or protein"
         mask = "not water or not ions"
-        mask = "ligand or protein or cofactors"
+        mask = "ligand or protein or excipients"
         mask = "noh protein"
         mask = "resid A:17 B:12 17 18"
         mask = "protein diff resid A:1"
@@ -559,7 +560,7 @@ def select_oemol_atom_idx_by_language(system, mask=''):
                 the protein carbon alpha atoms
                 the water atoms,
                 the ion atoms,
-                the cofactor atoms
+                the excipients atoms
         Returns:
         --------
         dic_set: python dictionary
@@ -570,7 +571,7 @@ def select_oemol_atom_idx_by_language(system, mask=''):
                 ligand,
                 water,
                 ions,
-                cofactors,
+                excipients,
                 system
         """
 
@@ -581,8 +582,6 @@ def select_oemol_atom_idx_by_language(system, mask=''):
         wat_set = set()
         excp_set = set()
         ion_set = set()
-        # cofactor_set = set()
-        # system_set = set()
 
         # Atom Bond Set vector used to contains the whole system
         frags = oechem.OEAtomBondSetVector()
@@ -675,14 +674,14 @@ def select_oemol_atom_idx_by_language(system, mask=''):
                 excp_set.add(sys_idx)
                 # print(sys_idx, '->', at_idx)
 
-        # Create the ions set
+        # Create the mono-atomic ions set
         for exc_idx in excp_set:
             atom = system.GetAtom(oechem.OEHasAtomIdx(exc_idx))
             if atom.GetDegree() == 0:
                 ion_set.add(exc_idx)
 
-        # Create the cofactor set
-        cofactor_set = excp_set - ion_set
+        # Create the excipients set which are not protein, ligand, waters or ions
+        excipients_set = excp_set - ion_set
 
         # Create the system set
         system_set = prot_set | lig_set | excp_set | wat_set
@@ -693,7 +692,7 @@ def select_oemol_atom_idx_by_language(system, mask=''):
 
         # The dictionary is used to link the token keywords to the created molecule sets
         dic_set = {'ligand': lig_set, 'protein': prot_set, 'ca_protein': ca_prot_set,
-                   'water': wat_set,  'ions': ion_set,     'cofactors': cofactor_set, 'system': system_set}
+                   'water': wat_set,  'ions': ion_set,     'excipients': excipients_set, 'system': system_set}
 
         return dic_set
 
@@ -879,7 +878,7 @@ def select_oemol_atom_idx_by_language(system, mask=''):
     # Define the tokens for the BNF grammar
     operand = pyp.Literal("protein") | pyp.Literal("ca_protein") | \
               pyp.Literal("ligand") | pyp.Literal("water") | \
-              pyp.Literal("ions") | pyp.Literal("cofactors") | resid
+              pyp.Literal("ions") | pyp.Literal("excipients") | resid
 
     # BNF Grammar definition with parseAction makeLRlike
     expr = pyp.operatorPrecedence(operand,

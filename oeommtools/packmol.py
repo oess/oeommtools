@@ -124,8 +124,10 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     padding_distance = padding_distance * unit.angstrom
     salt_concentration = salt_concentration * unit.millimolar
 
+    solute_copy = oechem.OEMol(solute)
+
     # Calculate the Solute Bounding Box
-    BB_solute = BoundingBox(solute)
+    BB_solute = BoundingBox(solute_copy)
 
     # Estimate of the box cube length
     box_edge = 2.0*padding_distance + np.max(BB_solute[1] - BB_solute[0])*unit.angstrom
@@ -145,8 +147,11 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     # Create a string code to identify the solute residues. The code ID used is based
     # on the residue number id, the residue name and the chain id:
     # id+resname+chainID
-    hv_solute = oechem.OEHierView(solute, oechem.OEAssumption_BondedResidue +
-                                  oechem.OEAssumption_ResPerceived)
+    hv_solute = oechem.OEHierView(solute_copy,
+                                  oechem.OEAssumption_BondedResidue +
+                                  oechem.OEAssumption_ResPerceived +
+                                  oechem.OEAssumption_PDBOrder)
+
     solute_resid_list = []
     for chain in hv_solute.GetChains():
         for frag in chain.GetFragments():
@@ -165,7 +170,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
         # Container for the ion smiles strings
         ions_smiles = []
         solute_formal_charge = 0
-        for at in solute.GetAtoms():
+        for at in solute_copy.GetAtoms():
             solute_formal_charge += at.GetFormalCharge()
         if solute_formal_charge > 0:
             ions_smiles.append("[Cl-]")
@@ -335,7 +340,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
         solvent_sum_wgt_frac += wgt * mol_fractions[idx]
 
     # Solute molecular weight
-    solute_wgt = oechem.OECalculateMolecularWeight(solute)*unit.gram/unit.mole
+    solute_wgt = oechem.OECalculateMolecularWeight(solute_copy)*unit.gram/unit.mole
 
     # Estimate of the number of each molecular species present in the solution accordingly
     # to their molar fraction fi:
@@ -389,10 +394,10 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     solute_pdb = 'solute' + '_' + os.path.basename(tempfile.mktemp(suffix='.pdb'))
     ofs = oechem.oemolostream(solute_pdb)
 
-    if solute.GetMaxConfIdx() > 1:
+    if solute_copy.GetMaxConfIdx() > 1:
         raise ValueError("Solutes with multiple conformers are not supported")
     else:
-        oechem.OEWriteConstMolecule(ofs, solute)
+        oechem.OEWriteConstMolecule(ofs, solute_copy)
 
     # Write Packmol header section
     mixture_pdb = 'mixture' + '_' + os.path.basename(tempfile.mktemp(suffix='.pdb'))
@@ -525,18 +530,18 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     for at in new_components.GetAtoms():
         res = oechem.OEAtomGetResidue(at)
 
-        if res.GetName() == "HOH":
-            res.SetName("WAT")
+        # if res.GetName() == "HOH":
+        #     res.SetName("WAT")
 
         res.SetChainID("Z")
         oechem.OEAtomSetResidue(at, res)
 
-    # Add the solvent molecules to the solute copy
+    # Add the solvent molecules to the original solute copy
     solvated_system = solute.CreateCopy()
     oechem.OEAddMols(solvated_system, new_components)
 
     # Set Title
-    solvated_system.SetTitle(solute.GetTitle())
+    solvated_system.SetTitle(solute_copy.GetTitle())
 
     # Set ions resname to Na+ and Cl-
     for at in solvated_system.GetAtoms():
@@ -572,7 +577,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     ths = 0.1 * unit.gram/unit.milliliter
     if not abs(density - density_mix.in_units_of(unit.gram/unit.milliliter)) < ths:
         raise ValueError("Error: the computed density for the solute {} does not match the selected density {} vs {}"
-                         .format(solute.GetTitle(), density_mix, density))
+                         .format(solute_copy.GetTitle(), density_mix, density))
 
     if geometry == 'box':
         # Define the box vector and attached it as SD tag to the solvated system
@@ -585,7 +590,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
         solvated_system.SetData(oechem.OEGetTag('box_vectors'), box_vectors)
 
     if return_components:
-        new_components.SetTitle(solute.GetTitle()+'_solvent_comp')
+        new_components.SetTitle(solute_copy.GetTitle()+'_solvent_comp')
         return solvated_system, new_components
     else:
         return solvated_system

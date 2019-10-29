@@ -32,8 +32,12 @@ def oemol_to_openmmTop(mol):
         The molecule atom positions associated with the
         generated topology in Angstrom units
     """
+
+    # Create a copy of the molecule
+    mol_copy = mol.CreateCopy()
+
     # OE Hierarchical molecule view
-    hv = oechem.OEHierView(mol, oechem.OEAssumption_BondedResidue +
+    hv = oechem.OEHierView(mol_copy, oechem.OEAssumption_BondedResidue +
                            oechem.OEAssumption_ResPerceived +
                            oechem.OEAssumption_PDBOrder)
 
@@ -65,9 +69,9 @@ def oemol_to_openmmTop(mol):
                     # Add atom to the mapping dictionary
                     oe_atom_to_openmm_at[oe_at] = openmm_at
 
-    if topology.getNumAtoms() != mol.NumAtoms():
+    if topology.getNumAtoms() != mol_copy.NumAtoms():
         raise ValueError("OpenMM topology and OEMol number of atoms mismatching: "
-                         "OpenMM = {} vs OEMol  = {}".format(topology.getNumAtoms(), mol.NumAtoms()))
+                         "OpenMM = {} vs OEMol  = {}".format(topology.getNumAtoms(), mol_copy.NumAtoms()))
 
     # Count the number of bonds in the openmm topology
     omm_bond_count = 0
@@ -129,7 +133,7 @@ def oemol_to_openmmTop(mol):
             return False
 
     # Creating bonds
-    for oe_bond in mol.GetBonds():
+    for oe_bond in mol_copy.GetBonds():
 
         omm_bond_count += 1
 
@@ -161,11 +165,11 @@ def oemol_to_openmmTop(mol):
         topology.addBond(oe_atom_to_openmm_at[oe_bond.GetBgn()], oe_atom_to_openmm_at[oe_bond.GetEnd()],
                          type=omm_bond_type, order=oe_bond.GetOrder())
 
-    if omm_bond_count != mol.NumBonds():
+    if omm_bond_count != mol_copy.NumBonds():
         raise ValueError("OpenMM topology and OEMol number of bonds mismatching: "
-                         "OpenMM = {} vs OEMol  = {}".format(omm_bond_count, mol.NumBonds()))
+                         "OpenMM = {} vs OEMol  = {}".format(omm_bond_count, mol_copy.NumBonds()))
 
-    dic = mol.GetCoords()
+    dic = mol_copy.GetCoords()
     positions = [Vec3(v[0], v[1], v[2]) for k, v in dic.items()] * unit.angstrom
 
     return topology, positions

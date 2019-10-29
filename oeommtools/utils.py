@@ -34,7 +34,7 @@ def oemol_to_openmmTop(mol):
     """
 
     # Create a copy of the molecule
-    mol_copy = mol.CreateCopy()
+    mol_copy = oechem.OEMol(mol)
 
     # OE Hierarchical molecule view
     hv = oechem.OEHierView(mol_copy, oechem.OEAssumption_BondedResidue +
@@ -414,7 +414,7 @@ def sanitizeOEMolecule(molecule):
         A copy of the checked molecule with fixed aromaticity,
         hydrogens and unique atom names if they are missing
     """
-    mol_copy = molecule.CreateCopy()
+    mol_copy = oechem.OEMol(molecule)
 
     # Check if the molecule has 3D coordinates
     if not oechem.OEGetDimensionFromCoords(mol_copy):
@@ -467,7 +467,7 @@ def strip_water_ions(in_system):
 
     """
     # Copy the input system
-    system = in_system.CreateCopy()
+    system = oechem.OEMol(in_system)
 
     # Create a bit vector mask
     bv = oechem.OEBitVector(system.GetMaxAtomIdx())

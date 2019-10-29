@@ -21,7 +21,7 @@ def oemol_to_openmmTop(mol):
 
     Parameters:
     -----------
-    mol: OEMol molecule
+    molecule: OEMol molecule
         The molecule to convert
 
     Return:
@@ -32,6 +32,7 @@ def oemol_to_openmmTop(mol):
         The molecule atom positions associated with the
         generated topology in Angstrom units
     """
+
     # OE Hierarchical molecule view
     hv = oechem.OEHierView(mol, oechem.OEAssumption_BondedResidue +
                            oechem.OEAssumption_ResPerceived +
@@ -410,7 +411,7 @@ def sanitizeOEMolecule(molecule):
         A copy of the checked molecule with fixed aromaticity,
         hydrogens and unique atom names if they are missing
     """
-    mol_copy = molecule.CreateCopy()
+    mol_copy = oechem.OEMol(molecule)
 
     # Check if the molecule has 3D coordinates
     if not oechem.OEGetDimensionFromCoords(mol_copy):
@@ -463,7 +464,7 @@ def strip_water_ions(in_system):
 
     """
     # Copy the input system
-    system = in_system.CreateCopy()
+    system = oechem.OEMol(in_system)
 
     # Create a bit vector mask
     bv = oechem.OEBitVector(system.GetMaxAtomIdx())

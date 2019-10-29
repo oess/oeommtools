@@ -36,7 +36,7 @@ class ConversionTester(unittest.TestCase):
         self.assertEqual(oe_pos, omm_pos.in_units_of(unit.angstrom)/unit.angstrom)
 
         # Assert bond order
-        dic_bond_openmm = {}
+        dic_bond_openmm = dict()
         for bond in top.bonds():
             # OpenMM atoms
             at0_idx = bond[0].index
@@ -46,7 +46,7 @@ class ConversionTester(unittest.TestCase):
             else:
                 dic_bond_openmm[(at1_idx, at0_idx)] = (bond.order, bond.type)
 
-        dic_bond_oe = {}
+        dic_bond_oe = dict()
         for bond in mol.GetBonds():
             # OE atoms
             at0_idx = bond.GetBgnIdx()

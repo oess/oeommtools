@@ -1,0 +1,8 @@
+HETATM    1  O   HOH     1       0.061   0.389   0.059  1.00 20.00           O
+HETATM    2  H1  HOH     1       0.724  -0.312  -0.038  1.00 20.00           H
+HETATM    3  H2  HOH     1      -0.785  -0.077  -0.021  1.00 20.00           H
+TER       4      HOH     1 
+CONECT    1    2    3
+CONECT    2    1
+CONECT    3    1
+END

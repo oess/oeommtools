@@ -8,7 +8,7 @@ the OE Toolkit with the OpenMM API
 
 
 ## Prerequisites
-* OE Toolkit
+* OE Toolkits >= 2019.10.2
 * OpenMM
 
 Authors

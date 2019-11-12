@@ -910,7 +910,8 @@ def select_oemol_atom_idx_by_language(system, mask=''):
 def split(complex, ligand_res_name='LIG'):
     """
     This function splits the passed system in protein, ligand,
-    water and excipients
+    water and excipients. Cofactor molecules are added to the
+    protein
 
     Parameters:
     ----------
@@ -946,7 +947,8 @@ def split(complex, ligand_res_name='LIG'):
     # molecules are recognized as ligands
     pf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Protein)     
     peptide = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Peptide)
-    protein_filter = oechem.OEOrRoleSet(pf, peptide)
+    cofactors = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Cofactor)
+    protein_filter = oechem.OEOrRoleSet(oechem.OEOrRoleSet(pf, peptide), cofactors)
     opt.SetProteinFilter(protein_filter)
     
     # The ligand filter is set to recognize just the ligand

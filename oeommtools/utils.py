@@ -628,7 +628,7 @@ def select_oemol_atom_idx_by_language(system, mask=''):
         if not oechem.OECombineMolComplexFragments(prot, frags, opt, opt.GetProteinFilter(), atommap):
             raise ValueError('Unable to split the Protein')
         # Populate the protein set and the protein carbon alpha set
-        pred = oechem.OEIsAlphaCarbon()
+        pred = oechem.OEIsCAlpha()
         for sys_at in system.GetAtoms():
             sys_idx = sys_at.GetIdx()
             at_idx = atommap[sys_idx]
@@ -910,7 +910,7 @@ def select_oemol_atom_idx_by_language(system, mask=''):
 def split(complex, ligand_res_name='LIG'):
     """
     This function splits the passed system in protein, ligand,
-    water and excipients
+    water and excipients.
 
     Parameters:
     ----------

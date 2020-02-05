@@ -8,14 +8,15 @@ branches:
 
 env:
   matrix:
-    - python=3.5 CONDA_PY=35 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
     - python=3.6 CONDA_PY=36 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
+    - python=3.7 CONDA_PY=37 OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple"
+
 
 
   global:
     - ORGNAME="omnia"
     - PACKAGENAME="oeommtools"
-    - VERSION="0.1.10"
+    - VERSION="0.1.12"
     - OE_LICENSE="$HOME/oe_license.txt"
     - DEV_TOOLS="devtools/conda-recipe"
     - USER="OpenEye"

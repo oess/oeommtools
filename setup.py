@@ -37,6 +37,6 @@ setup(
     author_email         ='gcalabro -at- eyesopen.com',
     platforms            =['Linux-64', 'Mac OSX-64', 'Unix-64'],
     packages             =find_packages()+['tests'],
-    include_package_data =True,
-    zip_safe             =False
+    include_package_data = True,
+    zip_safe             = False
 )

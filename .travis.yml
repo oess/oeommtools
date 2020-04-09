@@ -37,7 +37,7 @@ before_install:
 install:
   - conda create -n openeye python=$python
   - source activate openeye
-  - pip install Openeye-toolkits==2019.10.2 && python -c "import openeye; print(openeye.__version__)"
+  - pip install Openeye-toolkits && python -c "import openeye; print(openeye.__version__)"
   - conda config --add channels ${ORGNAME}
   - conda build --python $python ${DEV_TOOLS}
   - conda install --use-local ${PACKAGENAME}

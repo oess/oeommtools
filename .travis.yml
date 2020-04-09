@@ -14,6 +14,7 @@ env:
 
   global:
     - ORGNAME="omnia"
+    - EXTRA_CHANNEL="conda-forge"
     - PACKAGENAME="oeommtools"
     - VERSION="0.1.13"
     - OE_LICENSE="$HOME/oe_license.txt"
@@ -39,6 +40,7 @@ install:
   - source activate openeye
   - conda install -c openeye openeye-toolkits
   - conda config --add channels ${ORGNAME}
+  - conda config --add channels ${EXTRA_CHANNEL}
   - conda build --python $python ${DEV_TOOLS}
   - conda install --use-local ${PACKAGENAME}
   - conda list

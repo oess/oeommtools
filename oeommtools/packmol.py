@@ -61,7 +61,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     verbose: Bool
         If True verbose mode is enabled
     return_components: Bool
-        If True the added solvent molecules are also returned as OEMol
+        If True the added solvent molecule components are also returned as OEMols
 
     Return:
     -------
@@ -69,9 +69,10 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
         The solvated system. If the selected geometry is a box a SD tag with
         name 'box_vector' is attached the output molecule containing
         the system box vectors.
-    oe_mol_components: OEMol
-        If the return_components flag is True the added solvent molecules are
-        returned as an additional OEMol
+    oe_mol_components: multiple OEMol
+        If the return_components flag is True the added solvent molecules components
+        are also returned as additional OEMols in addition to the whole solvated system
+        If some components is missing None is return for that component
     """
 
     def BoundingBox(molecule):
@@ -376,10 +377,10 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
 
     if geometry == 'box':
         solvent_template = """\nstructure {}\nnumber {}\ninside box {:0.3f} {:0.3f} {:0.3f} {:0.3f} {:0.3f} {:0.3f}\
-        \nchain !\nresnumbers 3\nend structure"""
+        \nchain {}\nresnumbers 3\nend structure"""
     if geometry == 'sphere':
         solvent_template = """\nstructure {}\nnumber {}\ninside sphere {:0.3f} {:0.3f} {:0.3f} {:0.3f}\
-        \nchain !\nresnumbers 3\nend structure"""
+        \nchain {}\nresnumbers 3\nend structure"""
 
     # Create solvents .pdb files
     solvent_pdbs = []
@@ -428,12 +429,14 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
             body += solvent_template.format(solvent_pdbs[i],
                                             n_monomers[i],
                                             xmin, ymin, zmin,
-                                            xmax, ymax, zmax)
+                                            xmax, ymax, zmax,
+                                            "!")
         if geometry == 'sphere':
             body += solvent_template.format(solvent_pdbs[i],
                                             n_monomers[i],
                                             xc, yc, zc,
-                                            0.5 * box_edge / unit.angstrom)
+                                            0.5 * box_edge / unit.angstrom,
+                                            "!")
 
     # Packmol setting for the salt section
     if salt_concentration > 0.0 * unit.millimolar and n_salt >= 1:
@@ -443,12 +446,14 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
                 body += solvent_template.format(salt_pdbs[i],
                                                 int(round(n_salt)),
                                                 xmin, ymin, zmin,
-                                                xmax, ymax, zmax)
+                                                xmax, ymax, zmax,
+                                                "?")
             if geometry == 'sphere':
                 body += solvent_template.format(salt_pdbs[i],
                                                 int(round(n_salt)),
                                                 xc, yc, zc,
-                                                0.5 * box_edge / unit.angstrom)
+                                                0.5 * box_edge / unit.angstrom,
+                                                "?")
 
     # Packmol setting for the ions section
     if neutralize_solute and n_ions >= 1:
@@ -458,12 +463,14 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
                 body += solvent_template.format(ions_smiles_pdbs[i],
                                                 n_ions,
                                                 xmin, ymin, zmin,
-                                                xmax, ymax, zmax)
+                                                xmax, ymax, zmax,
+                                                "*")
             if geometry == 'sphere':
                 body += solvent_template.format(ions_smiles_pdbs[i],
                                                 n_ions,
                                                 xc, yc, zc,
-                                                0.5 * box_edge / unit.angstrom)
+                                                0.5 * box_edge / unit.angstrom,
+                                                "*")
 
     # Packmol configuration file
     packmol_filename = os.path.basename(tempfile.mktemp(suffix='.inp'))
@@ -487,73 +494,89 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
         os.rename(mixture_pdb+'_FORCED', mixture_pdb)
         print("Warning: Packing solution is not optimal")
 
-    ifs = oechem.oemolistream(mixture_pdb)
-    oechem.OEReadMolecule(ifs, solvated)
+    with oechem.oemolistream(mixture_pdb) as ifs:
+        oechem.OEReadMolecule(ifs, solvated)
 
     # To avoid to change the user oemol starting solute by reading in
     # the generated mixture pdb file and loosing molecule info, the
     # solvent molecules are extracted from the mixture system and
     # added back to the starting solute
 
-    # Extract from the solution system the solvent molecules
-    # by checking the previous solute generated ID: id+resname+chainID
+    # Extract from the solution system the solvent molecule components
     hv_solvated = oechem.OEHierView(solvated, oechem.OEAssumption_BondedResidue +
                                     oechem.OEAssumption_ResPerceived)
 
-    # This molecule will hold the solvent molecules generated directly from
-    # the omega conformers. This is useful to avoid problems related to read in
-    # the solvent molecules from pdb files and triggering unwanted perceiving actions
-    new_components = oechem.OEMol()
+    bv_solvent = oechem.OEBitVector(solvated.GetMaxAtomIdx())
+    bv_salt = oechem.OEBitVector(solvated.GetMaxAtomIdx())
+    bv_counter_ions = oechem.OEBitVector(solvated.GetMaxAtomIdx())
 
-    bv = oechem.OEBitVector(solvated.GetMaxAtomIdx())
     for chain in hv_solvated.GetChains():
         for frag in chain.GetFragments():
             for hres in frag.GetResidues():
-                oe_res = hres.GetOEResidue()
-                if str(oe_res.GetResidueNumber())+oe_res.GetName()+chain.GetChainID() not in solute_resid_list:
-                    oechem.OEAddMols(new_components, solvent_resid_dic_names[oe_res.GetName()])
+
+                if chain.GetChainID() in ["!", "?", "*"]:
+
+                    # Solvent Molecules
+                    if chain.GetChainID() == "!":
+                        bv = bv_solvent
+                    # Salt Molecules
+                    elif chain.GetChainID() == "?":
+                        bv = bv_salt
+                    # Counter Ions
+                    elif chain.GetChainID() == "*":
+                        bv = bv_counter_ions
+                    else:
+                        raise ValueError("Unknown Chain ID")
+
                     atms = hres.GetAtoms()
+
                     for at in atms:
                         bv.SetBitOn(at.GetIdx())
 
-    pred = oechem.OEAtomIdxSelected(bv)
-    components = oechem.OEMol()
-    oechem.OESubsetMol(components, solvated, pred)
+    solvent_comp = oechem.OEMol()
+    salt_comp = oechem.OEMol()
+    counter_ions_comp = oechem.OEMol()
 
-    new_components.SetCoords(components.GetCoords())
+    solvent_comp.SetTitle("Solvent")
+    salt_comp.SetTitle("Salt")
+    counter_ions_comp.SetTitle("Counter_ions")
 
-    # This is necessary otherwise just one big residue is created
-    oechem.OEPerceiveResidues(new_components)
+    comp_list = list([solvent_comp, salt_comp, counter_ions_comp])
+    bv_list = list([bv_solvent, bv_salt, bv_counter_ions])
 
-    # Set Water residue name to WAT and
-    # Packmol added solvent chain to !
-    for at in new_components.GetAtoms():
-        res = oechem.OEAtomGetResidue(at)
+    for bv, comp in zip(bv_list, comp_list):
 
-        # if res.GetName() == "HOH":
-        #     res.SetName("WAT")
+        pred = oechem.OEAtomIdxSelected(bv)
+        if not oechem.OESubsetMol(comp, solvated, pred):
+            raise ValueError("Cannot extract the component from the solvated system")
 
-        res.SetChainID("Z")
-        oechem.OEAtomSetResidue(at, res)
+        # Change ion NA, CL names to Na+, Cl-
+        for at in comp.GetAtoms():
+            res = oechem.OEAtomGetResidue(at)
+            if res.GetName() == ' NA':
+                res.SetName("Na+")
+                oechem.OEAtomSetResidue(at, res)
+            elif res.GetName() == ' CL':
+                res.SetName("Cl-")
+                oechem.OEAtomSetResidue(at, res)
+            else:
+                pass
 
-    # Add the solvent molecules to the original solute copy
+    # Add the solvent components to the original solute copy
     solvated_system = solute.CreateCopy()
-    oechem.OEAddMols(solvated_system, new_components)
 
     # Set Title
     solvated_system.SetTitle(solute_copy.GetTitle())
 
-    # Set ions resname to Na+ and Cl-
-    for at in solvated_system.GetAtoms():
-        res = oechem.OEAtomGetResidue(at)
-        if res.GetName() == ' NA':
-            res.SetName("Na+")
-            oechem.OEAtomSetResidue(atmol, res)
-        elif res.GetName() == ' CL':
-            res.SetName("Cl-")
-            oechem.OEAtomSetResidue(atmol, res)
-        else:
-            pass
+    for comp in comp_list:
+        oechem.OEAddMols(solvated_system, comp)
+
+    if solvated_system.NumAtoms() != \
+            solute.NumAtoms() + \
+            solvent_comp.NumAtoms() + \
+            salt_comp.NumAtoms() + \
+            counter_ions_comp.NumAtoms():
+        raise ValueError("Solvated system atom mismatch")
 
     # Cleaning
     to_delete = solvent_pdbs+[packmol_filename, solute_pdb, mixture_pdb]
@@ -590,7 +613,12 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
         solvated_system.SetData(oechem.OEGetTag('box_vectors'), box_vectors)
 
     if return_components:
-        new_components.SetTitle(solute_copy.GetTitle()+'_solvent_comp')
-        return solvated_system, new_components
+        components = list()
+        for comp in comp_list:
+            if comp.NumAtoms():
+                components.append(comp)
+            else:
+                components.append(None)
+        return tuple([solvated_system] + components)
     else:
         return solvated_system

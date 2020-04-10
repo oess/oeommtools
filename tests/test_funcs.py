@@ -178,7 +178,8 @@ class SolvatePackmolTester(unittest.TestCase):
                                          geometry='box',
                                          close_solvent=True,
                                          salt='[Na+], [Cl-]', salt_concentration=100.0,
-                                         neutralize_solute=True)
+                                         neutralize_solute=True,
+                                         return_components=False)
 
         prot, lig, wat, other = utils.split(solv_complex)
 
@@ -229,7 +230,7 @@ class SolvatePackmolTester(unittest.TestCase):
                                          geometry='box',
                                          close_solvent=True,
                                          salt='[Na+], [Cl-]', salt_concentration=100.0,
-                                         neutralize_solute=True)
+                                         neutralize_solute=True, return_components=False)
 
         prot, lig, wat, other = utils.split(solv_complex)
 
@@ -260,6 +261,77 @@ class SolvatePackmolTester(unittest.TestCase):
         self.assertAlmostEqual(box_vectors[2][2] / unit.nanometers, 8.23, delta=0.01)
         self.assertEqual(box_vectors[2][0] / unit.nanometers, 0.0)
         self.assertEqual(box_vectors[2][1] / unit.nanometers, 0.0)
+
+    def test_solvation_packmol_components(self):
+        # Complex file name
+        fcomplex = "tests/data/Bace_protein.pdb"
+
+        # Read OEMol molecule
+        mol = oechem.OEMol()
+
+        with oechem.oemolistream(fcomplex) as ifs:
+            oechem.OEReadMolecule(ifs, mol)
+
+        # Solvate the system
+        solv_complex, solvent, salt, counter_ions = packmol.oesolvate(mol, density=1.0,
+                                                                      padding_distance=10.0,
+                                                                      distance_between_atoms=2.0,
+                                                                      solvents='tip3p',
+                                                                      molar_fractions='1.0',
+                                                                      geometry='box',
+                                                                      close_solvent=True,
+                                                                      salt='[Na+], [Cl-]', salt_concentration=100.0,
+                                                                      neutralize_solute=True,
+                                                                      return_components=True)
+
+        prot, lig, wat, other = utils.split(solv_complex)
+
+        npa = prot.GetMaxAtomIdx()
+        nla = lig.GetMaxAtomIdx()
+        noa = other.GetMaxAtomIdx()
+        nwa = wat.GetMaxAtomIdx()
+
+        self.assertEqual(npa, 6044)
+        self.assertEqual(nla, 0)
+
+        # The Bace system has 19 water molecules
+        self.assertEqual(nwa, solvent.NumAtoms() + 19 * 3)
+
+        # The Bace system has the TLA excipient with 14 atoms
+        self.assertEqual(noa, salt.NumAtoms() + counter_ions.NumAtoms() + 14)
+
+    def test_solvation_packmol_components_None(self):
+        # Complex file name
+        fcomplex = "tests/data/Bace_protein.pdb"
+
+        # Read OEMol molecule
+        mol = oechem.OEMol()
+
+        with oechem.oemolistream(fcomplex) as ifs:
+            oechem.OEReadMolecule(ifs, mol)
+
+        # Solvate the system
+        solv_complex, solvent, salt, counter_ions = packmol.oesolvate(mol, density=1.0,
+                                                                      padding_distance=10.0,
+                                                                      distance_between_atoms=2.0,
+                                                                      solvents='tip3p',
+                                                                      molar_fractions='1.0',
+                                                                      geometry='box',
+                                                                      close_solvent=True,
+                                                                      salt='[Na+], [Cl-]', salt_concentration=0.0,
+                                                                      neutralize_solute=False,
+                                                                      return_components=True)
+
+        prot, lig, wat, other = utils.split(solv_complex)
+
+        npa = prot.GetMaxAtomIdx()
+        nla = lig.GetMaxAtomIdx()
+
+        self.assertEqual(npa, 6044)
+        self.assertEqual(nla, 0)
+
+        assert salt is None
+        assert counter_ions is None
 
 
 class RemoveWaterIonsTester(unittest.TestCase):

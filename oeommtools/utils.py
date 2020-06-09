@@ -34,7 +34,7 @@ def oemol_to_openmmTop(mol):
     """
 
     # OE Hierarchical molecule view
-    hv = oechem.OEHierView(mol, oechem.OEAssumption_BondedResidue +
+    hv = oechem.OEHierView(mol,
                            oechem.OEAssumption_ResPerceived +
                            oechem.OEAssumption_PDBOrder)
 
@@ -56,13 +56,13 @@ def oemol_to_openmmTop(mol):
                 oe_res = hres.GetOEResidue()
                 # Create OpenMM residue
                 openmm_res = topology.addResidue(oe_res.GetName(), openmm_chain)
-
+                # print(oe_res.GetName(), oe_res.GetResidueNumber(), oe_res.GetChainID())
                 for oe_at in hres.GetAtoms():
+                    # print("\t", oe_at.GetName(), oe_res.GetSerialNumber(), oe_at.GetIdx())
                     # Select atom element based on the atomic number
                     element = app.element.Element.getByAtomicNumber(oe_at.GetAtomicNum())
                     # Add atom OpenMM atom to the topology
                     openmm_at = topology.addAtom(oe_at.GetName(), element, openmm_res)
-                    openmm_at.index = oe_at.GetIdx()
                     # Add atom to the mapping dictionary
                     oe_atom_to_openmm_at[oe_at] = openmm_at
 

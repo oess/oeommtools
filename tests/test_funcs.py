@@ -367,5 +367,31 @@ class RemoveWaterIonsTester(unittest.TestCase):
         self.assertEqual(nwa, 0)
 
 
+class SplitterTester(unittest.TestCase):
+    """
+    Test Splitter
+    """
+
+    def setUp(self):
+        pass
+
+    def test_splitter(self):
+        # Complex file name
+        flask_name = "tests/data/thrombin_flask.oeb"
+
+        # Read OEMol molecule
+        flask = oechem.OEMol()
+
+        with oechem.oemolistream(flask_name) as ifs:
+            oechem.OEReadMolecule(ifs, flask)
+
+        prot, lig, wat, others = utils.split(flask, ligand_res_name='LIG')
+
+        self.assertEqual(prot.NumAtoms(), 4686)
+        self.assertEqual(lig.NumAtoms(), 52)
+        self.assertEqual(wat.NumAtoms(), 33783)
+        self.assertEqual(others.NumAtoms(), 25)
+
+
 if __name__ == "__main__":
         unittest.main()

@@ -14,7 +14,7 @@ requirements:
     - python
     - pytest
     - setuptools
-    - numpy==1.18.1
+    - numpy==1.18.5
     - openmm
     - pyparsing
     - packmol==18.169

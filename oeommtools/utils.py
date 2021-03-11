@@ -5,6 +5,7 @@ from simtk import unit
 import itertools
 import pyparsing as pyp
 
+
 proteinResidues = ['ALA', 'ASN', 'CYS', 'GLU', 'HIS',
                    'LEU', 'MET', 'PRO', 'THR', 'TYR',
                    'ARG', 'ASP', 'GLN', 'GLY', 'ILE',

@@ -971,10 +971,4 @@ def split(complex, ligand_res_name='LIG'):
     # At this point prot contains the protein, lig contains the ligand,
     # wat contains the water and excipients contains the excipients
 
-    # Set the order as in the pdb order
-    oechem.OEPDBOrderAtoms(prot, True)
-    oechem.OEPDBOrderAtoms(lig, True)
-    oechem.OEPDBOrderAtoms(wat, True)
-    oechem.OEPDBOrderAtoms(other, True)
-
     return prot, lig, wat, other

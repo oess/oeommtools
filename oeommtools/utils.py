@@ -165,7 +165,6 @@ def oemol_to_openmmTop(mol):
     if omm_bond_count != mol.NumBonds():
         raise ValueError("OpenMM topology and OEMol number of bonds mismatching: "
                          "OpenMM = {} vs OEMol  = {}".format(omm_bond_count, mol.NumBonds()))
-
     dic = mol.GetCoords()
     positions = [Vec3(v[0], v[1], v[2]) for k, v in dic.items()] * unit.angstrom
 

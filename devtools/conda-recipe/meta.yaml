@@ -14,10 +14,10 @@ requirements:
     - python
     - pytest
     - setuptools
-    - numpy==1.18.5
+    - numpy
     - openmm
     - pyparsing
-    - packmol==18.169
+    - packmol
     - parmed
   run:
     - python

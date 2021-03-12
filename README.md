@@ -21,6 +21,7 @@ conda install -c openeye/label/Orion oeommtools -c omnia
 
 Usage
 -----
+
 The following example solvate a benzene molecule in a box of water:
 
 ```python

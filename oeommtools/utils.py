@@ -5,6 +5,7 @@ from simtk import unit
 import itertools
 import pyparsing as pyp
 
+
 proteinResidues = ['ALA', 'ASN', 'CYS', 'GLU', 'HIS',
                    'LEU', 'MET', 'PRO', 'THR', 'TYR',
                    'ARG', 'ASP', 'GLN', 'GLY', 'ILE',
@@ -165,7 +166,6 @@ def oemol_to_openmmTop(mol):
     if omm_bond_count != mol.NumBonds():
         raise ValueError("OpenMM topology and OEMol number of bonds mismatching: "
                          "OpenMM = {} vs OEMol  = {}".format(omm_bond_count, mol.NumBonds()))
-
     dic = mol.GetCoords()
     positions = [Vec3(v[0], v[1], v[2]) for k, v in dic.items()] * unit.angstrom
 
@@ -970,11 +970,5 @@ def split(complex, ligand_res_name='LIG'):
         
     # At this point prot contains the protein, lig contains the ligand,
     # wat contains the water and excipients contains the excipients
-
-    # Set the order as in the pdb order
-    oechem.OEPDBOrderAtoms(prot, True)
-    oechem.OEPDBOrderAtoms(lig, True)
-    oechem.OEPDBOrderAtoms(wat, True)
-    oechem.OEPDBOrderAtoms(other, True)
 
     return prot, lig, wat, other

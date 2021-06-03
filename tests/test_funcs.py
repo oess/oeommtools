@@ -181,15 +181,21 @@ class SolvatePackmolTester(unittest.TestCase):
                                          neutralize_solute=True,
                                          return_components=False)
 
-        prot, lig, wat, other = utils.split(solv_complex)
+        prot, lig, wat, cofactors, lipids, metals, excipients = utils.split(solv_complex)
 
         npa = prot.GetMaxAtomIdx()
         nla = lig.GetMaxAtomIdx()
-        noa = other.GetMaxAtomIdx()
+        noa = excipients.GetMaxAtomIdx()
         nwa = wat.GetMaxAtomIdx()
+        nlpa = lipids.GetMaxAtomIdx()
+        nma = metals.GetMaxAtomIdx()
+        nca = cofactors.GetMaxAtomIdx()
 
         self.assertEqual(npa, 6044)
         self.assertEqual(nla, 0)
+        self.assertEqual(nlpa, 0)
+        self.assertEqual(nca, 0)
+        self.assertEqual(nma, 0)
         # Ions added to excipients
         self.assertEqual(noa, 94)
         # Water molecules added
@@ -232,15 +238,22 @@ class SolvatePackmolTester(unittest.TestCase):
                                          salt='[Na+], [Cl-]', salt_concentration=100.0,
                                          neutralize_solute=True, return_components=False)
 
-        prot, lig, wat, other = utils.split(solv_complex)
+        prot, lig, wat,  cofactors, lipids, metals, excipients = utils.split(solv_complex)
 
         npa = prot.GetMaxAtomIdx()
         nla = lig.GetMaxAtomIdx()
-        noa = other.GetMaxAtomIdx()
+        noa = excipients.GetMaxAtomIdx()
         nwa = wat.GetMaxAtomIdx()
+        nlpa = lipids.GetMaxAtomIdx()
+        nma = metals.GetMaxAtomIdx()
+        nca = cofactors.GetMaxAtomIdx()
 
         self.assertEqual(npa, 6044)
         self.assertEqual(nla, 0)
+        self.assertEqual(nlpa, 0)
+        self.assertEqual(nca, 0)
+        self.assertEqual(nma, 0)
+
         # Ions added to excipients
         self.assertEqual(noa, 94)
         # Water molecules added
@@ -284,15 +297,21 @@ class SolvatePackmolTester(unittest.TestCase):
                                                                       neutralize_solute=True,
                                                                       return_components=True)
 
-        prot, lig, wat, other = utils.split(solv_complex)
+        prot, lig, wat, cofactors, lipids, metals, excipients = utils.split(solv_complex)
 
         npa = prot.GetMaxAtomIdx()
         nla = lig.GetMaxAtomIdx()
-        noa = other.GetMaxAtomIdx()
+        noa = excipients.GetMaxAtomIdx()
         nwa = wat.GetMaxAtomIdx()
+        nlpa = lipids.GetMaxAtomIdx()
+        nma = metals.GetMaxAtomIdx()
+        nca = cofactors.GetMaxAtomIdx()
 
         self.assertEqual(npa, 6044)
         self.assertEqual(nla, 0)
+        self.assertEqual(nlpa, 0)
+        self.assertEqual(nca, 0)
+        self.assertEqual(nma, 0)
 
         # The Bace system has 19 water molecules
         self.assertEqual(nwa, solvent.NumAtoms() + 19 * 3)
@@ -322,7 +341,7 @@ class SolvatePackmolTester(unittest.TestCase):
                                                                       neutralize_solute=False,
                                                                       return_components=True)
 
-        prot, lig, wat, other = utils.split(solv_complex)
+        prot, lig, wat, cofactors, lipids, metals, excipients = utils.split(solv_complex)
 
         npa = prot.GetMaxAtomIdx()
         nla = lig.GetMaxAtomIdx()
@@ -354,17 +373,23 @@ class RemoveWaterIonsTester(unittest.TestCase):
 
         clean_system = utils.strip_water_ions(mol)
 
-        prot, lig, wat, other = utils.split(clean_system)
+        prot, lig, wat, cofactors, lipids, metals, excipients = utils.split(clean_system)
 
         npa = prot.GetMaxAtomIdx()
         nla = lig.GetMaxAtomIdx()
-        noa = other.GetMaxAtomIdx()
+        noa = excipients.GetMaxAtomIdx()
         nwa = wat.GetMaxAtomIdx()
+        nlpa = lipids.GetMaxAtomIdx()
+        nma = metals.GetMaxAtomIdx()
+        nca = cofactors.GetMaxAtomIdx()
 
         self.assertEqual(npa, 5629)
         self.assertEqual(nla, 43)
         self.assertEqual(noa, 0)
         self.assertEqual(nwa, 0)
+        self.assertEqual(nlpa, 0)
+        self.assertEqual(nca, 0)
+        self.assertEqual(nma, 0)
 
 
 class SplitterTester(unittest.TestCase):
@@ -385,12 +410,15 @@ class SplitterTester(unittest.TestCase):
         with oechem.oemolistream(flask_name) as ifs:
             oechem.OEReadMolecule(ifs, flask)
 
-        prot, lig, wat, others = utils.split(flask, ligand_res_name='LIG')
+        prot, lig, wat, cofactors, lipids, metals, excipients = utils.split(flask, ligand_res_name='LIG')
 
         self.assertEqual(prot.NumAtoms(), 4686)
         self.assertEqual(lig.NumAtoms(), 52)
         self.assertEqual(wat.NumAtoms(), 33783)
-        self.assertEqual(others.NumAtoms(), 25)
+        self.assertEqual(cofactors.NumAtoms(), 0)
+        self.assertEqual(lipids.NumAtoms(), 0)
+        self.assertEqual(metals.NumAtoms(), 0)
+        self.assertEqual(excipients.NumAtoms(), 25)
 
 
 if __name__ == "__main__":

@@ -927,15 +927,20 @@ def split(complex, ligand_res_name='LIG'):
         The split ligand
     wat : oechem.OEMol
         The spit water
-    other : oechem.OEMol
+    cofactors : oechem.OEMol
+        The cofactors
+    lipids : oechem.OEMol
+        The lipids
+    metals : oechem.OEMol
+        The metals
+    excipients : oechem.OEMol
         The excipients
-
     """
 
     # Set empty molecule containers
-    prot = oechem.OEMol()
-    lig = oechem.OEMol()
-    wat = oechem.OEMol()
+    protein = oechem.OEMol()
+    ligand = oechem.OEMol()
+    water = oechem.OEMol()
     other = oechem.OEMol()
 
     # Define the Filter options before the splitting
@@ -944,11 +949,11 @@ def split(complex, ligand_res_name='LIG'):
     # The protein filter is set to avoid that multiple
     # chains are separated during the splitting and peptide
     # molecules are recognized as ligands
-    pf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Protein)     
+    pf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Protein)
     peptide = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Peptide)
     protein_filter = oechem.OEOrRoleSet(pf, peptide)
     opt.SetProteinFilter(protein_filter)
-    
+
     # The ligand filter is set to recognize just the ligand
     lf = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Ligand)
     not_protein_filter = oechem.OENotRoleSet(protein_filter)
@@ -965,10 +970,33 @@ def split(complex, ligand_res_name='LIG'):
     opt.SetCategorizer(cat)
 
     # Splitting the system
-    if not oechem.OESplitMolComplex(lig, prot, wat, other, complex, opt):
+    if not oechem.OESplitMolComplex(ligand, protein, water, other, complex, opt):
         raise ValueError('Unable to split the complex')
-        
-    # At this point prot contains the protein, lig contains the ligand,
-    # wat contains the water and excipients contains the excipients
 
-    return prot, lig, wat, other
+    cofactors = oechem.OEMol()
+    lipids = oechem.OEMol()
+    metals = oechem.OEMol()
+    excipients = oechem.OEMol()
+
+    # Splitting the subsystem
+    if other.NumAtoms():
+
+        opt_other = oechem.OESplitMolComplexOptions()
+
+        lipid_filter = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Lipid)
+        opt_other.SetProteinFilter(lipid_filter)
+
+        cofactor_filter = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Cofactor)
+        opt_other.SetLigandFilter(cofactor_filter)
+
+        metal_filter = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Metal)
+        opt_other.SetWaterFilter(metal_filter)
+
+        # Set Category
+        cat_other = oechem.OEMolComplexCategorizer()
+        opt_other.SetCategorizer(cat_other)
+
+        if not oechem.OESplitMolComplex(cofactors, lipids, metals, excipients, other, opt_other):
+            raise ValueError('Unable to split the Subcategories')
+
+    return protein, ligand, water, cofactors, lipids, metals, excipients

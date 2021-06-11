@@ -421,7 +421,8 @@ def sanitizeOEMolecule(molecule):
         oechem.OEAddExplicitHydrogens(mol_copy)
     # Check if the molecule has assigned aromaticity
     if not mol_copy.HasPerceived(oechem.OEPerceived_Aromaticity):
-        oechem.OEAssignAromaticFlags(mol_copy, oechem.OEAroModelOpenEye)
+        # oechem.OEAssignAromaticFlags(mol_copy, oechem.OEAroModelOpenEye)
+        oechem.OEAssignAromaticFlags(mol_copy, oechem.OEAroModelMDL)
 
     # Check for any missing and not unique atom names.
     # If found reassign all of them as Tripos atom names

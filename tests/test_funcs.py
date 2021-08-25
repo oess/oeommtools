@@ -36,15 +36,22 @@ class ConversionTester(unittest.TestCase):
         self.assertEqual(oe_pos, omm_pos.in_units_of(unit.angstrom)/unit.angstrom)
 
         # Assert bond order
+        bond_mapping = {app.Single: "Single",
+                        app.Double: "Double",
+                        app.Triple: "Triple",
+                        app.Amide: "Amide",
+                        app.Aromatic: "Aromatic"}
+
         dic_bond_openmm = dict()
         for bond in top.bonds():
             # OpenMM atoms
             at0_idx = bond[0].index
             at1_idx = bond[1].index
+            oe_bond_type = bond_mapping[bond.type]
             if at0_idx < at1_idx:
-                dic_bond_openmm[(at0_idx, at1_idx)] = (bond.order, bond.type)
+                dic_bond_openmm[(at0_idx, at1_idx)] = (bond.order, oe_bond_type)
             else:
-                dic_bond_openmm[(at1_idx, at0_idx)] = (bond.order, bond.type)
+                dic_bond_openmm[(at1_idx, at0_idx)] = (bond.order, oe_bond_type)
 
         dic_bond_oe = dict()
         for bond in mol.GetBonds():

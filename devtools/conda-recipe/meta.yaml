@@ -1,13 +1,15 @@
 package:
   name: oeommtools
-  version: {{ environ['VERSION'] }}
+  version: '0.1.18'
 
 source:
   path: ../../
 
 build:
+  noarch: python
   preserve_egg_dir: True
   number: 0
+  string: py_0
 
 requirements:
   build:
@@ -37,3 +39,5 @@ test:
 
 about:
   home: https://github.com/oess/oeommtools
+  license: OpenEye proprietary
+  summary: OpenEye and OpenMM utilities

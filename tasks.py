@@ -1,4 +1,4 @@
-# (C) 2018 OpenEye Scientific Software Inc. All rights reserved.
+# (C) 2021 OpenEye Scientific Software Inc. All rights reserved.
 #
 # TERMS FOR USE OF SAMPLE CODE The software below ("Sample Code") is
 # provided to current licensees or subscribers of OpenEye products or
@@ -19,7 +19,9 @@ import os
 
 import shutil
 
-from invoke import task
+from invoke import task, run
+
+import importlib
 
 import oeommtools
 
@@ -35,25 +37,62 @@ def setversion(ctx, new_version):
 
     clean(ctx)
 
-    fn = os.path.join(PACKAGE_DIR, 'oeommtools', "__init__.py")
+    fn = os.path.join(PACKAGE_DIR, "oeommtools", "__init__.py")
 
     with open(fn, "r") as f:
         lines = f.readlines()
 
-    lines = ["__version__ = '{}'\n".format(new_version) if '__version__' in line else line for line in lines]
+    lines = [
+        "__version__ = '{}'\n".format(new_version) if "__version__" in line else line
+        for line in lines
+    ]
 
     with open(fn, "w") as f:
         f.writelines(lines)
 
-    fn = os.path.join(PACKAGE_DIR, '.travis.yml')
+    fn = os.path.join(PACKAGE_DIR, "devtools/conda-recipe", "meta.yaml")
 
     with open(fn, "r") as f:
         lines = f.readlines()
 
-    lines = ['    - VERSION="{}"\n'.format(new_version) if line.startswith("    - VERSION=") else line for line in lines]
+    lines = [
+        "  version: '{}'\n".format(new_version) if "version" in line else line
+        for line in lines
+    ]
 
     with open(fn, "w") as f:
         f.writelines(lines)
+
+    importlib.reload(oeommtools)
+
+
+@task
+def version(ctx):
+    print(oeommtools.__version__)
+
+
+@task
+def anaconda_upload(ctx, username, label="Orion"):
+    conda_build_path = os.environ['CONDA_PREFIX'].split('envs')[0] + "conda-bld/noarch/"
+    fn = oeommtools.__name__ + "-" + oeommtools.__version__ + "-py_0.tar.bz2"
+
+    full_path = os.path.join(conda_build_path, fn)
+
+    if not os.path.isfile(full_path):
+        try:
+            print("\n>>>>>>>>>>> Building the conda recipe <<<<<<<<<<<<<\n")
+            pkg_meta_file = os.path.join(os.path.dirname(oeommtools.__path__[0]), "devtools/conda-recipe/")
+            run("conda build {} -c conda-forge -c omnia -c OpenEye/label/Orion".format(pkg_meta_file))
+            print("\n>>>>>>>>>>> End building the conda recipe <<<<<<<<<<<<<\n")
+        except Exception as e:
+            if not os.path.isfile(full_path):
+                raise ValueError("Something went wrong during the conda Building {}".format(str(e)))
+    try:
+        print("\nAnaconda Uploading....\n")
+        run("anaconda upload --user {} -l {} {}".format(username, label, full_path))
+        print("\nDone\n")
+    except Exception as e:
+        raise IOError("It was not possible to upload the file: {}".format(str(e)))
 
 
 @task
@@ -94,7 +133,7 @@ def clean_pycache(ctx):
     """
     for dirpath, dirs, files in os.walk(os.getcwd()):
         for dir in dirs:
-            if dir == '__pycache__':
+            if dir == "__pycache__":
                 del_dir = os.path.join(dirpath, dir)
                 shutil.rmtree(del_dir)
 

@@ -148,32 +148,38 @@ def oemol_to_openmmTop(mol):
             return False
 
     # Creating bonds
+    bond_mapping = {"Single": app.Single,
+                    "Double": app.Double,
+                    "Triple": app.Triple,
+                    "Amide": app.Amide,
+                    "Aromatic": app.Aromatic}
+
     for oe_bond in mol.GetBonds():
 
         omm_bond_count += 1
 
         # Set the bond type
         if oe_bond.GetType() is not "":
-            if oe_bond.GetType() in ['Single', 'Double', 'Triple', 'Aromatic', 'Amide']:
-                omm_bond_type = oe_bond.GetType()
+            if oe_bond.GetType() in bond_mapping:
+                omm_bond_type = bond_mapping[oe_bond.GetType()]
             else:
                 omm_bond_type = None
         else:
             if oe_bond.IsAromatic():
                 oe_bond.SetType("Aromatic")
-                omm_bond_type = "Aromatic"
+                omm_bond_type = app.Aromatic
             elif oe_bond.GetOrder() == 2:
                 oe_bond.SetType("Double")
-                omm_bond_type = "Double"
+                omm_bond_type = app.Double
             elif oe_bond.GetOrder() == 3:
                 oe_bond.SetType("Triple")
-                omm_bond_type = "Triple"
+                omm_bond_type = app.Triple
             elif IsAmideBond(oe_bond):
                 oe_bond.SetType("Amide")
-                omm_bond_type = "Amide"
+                omm_bond_type = app.Amide
             elif oe_bond.GetOrder() == 1:
                 oe_bond.SetType("Single")
-                omm_bond_type = "Single"
+                omm_bond_type = app.Single
             else:
                 omm_bond_type = None
 
@@ -255,6 +261,12 @@ def openmmTop_to_oemol(topology, positions, verbose=False):
     omm_bond_count = 0
 
     # Create the bonds
+    bond_mapping = {app.Single: "Single",
+                    app.Double: "Double",
+                    app.Triple: "Triple",
+                    app.Amide: "Amide",
+                    app.Aromatic: "Aromatic"}
+
     for omm_bond in topology.bonds():
 
         omm_bond_count += 1
@@ -276,13 +288,13 @@ def openmmTop_to_oemol(topology, positions, verbose=False):
         oe_bond = oe_mol.NewBond(oe_atom0, oe_atom1, oe_bond_order)
 
         if omm_bond.type:
-            if omm_bond.type == 'Aromatic':
+            if omm_bond.type == app.Aromatic:
                 oe_atom0.SetAromatic(True)
                 oe_atom1.SetAromatic(True)
                 oe_bond.SetAromatic(True)
-                oe_bond.SetType("Aromatic")
-            elif omm_bond.type in ["Single", "Double", "Triple", "Amide"]:
-                oe_bond.SetType(omm_bond.type)
+                oe_bond.SetType(bond_mapping[omm_bond.type])
+            elif omm_bond.type in bond_mapping:
+                oe_bond.SetType(bond_mapping[omm_bond.type])
             else:
                 oe_bond.SetType("")
 

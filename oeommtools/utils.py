@@ -443,8 +443,9 @@ def sanitizeOEMolecule(molecule):
     mol_copy = oechem.OEMol(molecule)
 
     # Check if the molecule has 3D coordinates
-    if not oechem.OEGetDimensionFromCoords(mol_copy):
-        raise ValueError("The molecule coordinates are set to zero")
+    if not mol_copy.NumAtoms() == 1:  # Mono-atomic molecules are skipped
+        if not oechem.OEGetDimensionFromCoords(mol_copy):
+            raise ValueError("The molecule coordinates are set to zero")
     # Check if the molecule has hydrogens
     if not oechem.OEHasExplicitHydrogens(mol_copy):
         oechem.OEAddExplicitHydrogens(mol_copy)

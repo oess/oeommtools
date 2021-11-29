@@ -419,7 +419,7 @@ def check_shell(core_mol, check_mol, cutoff):
     return in_out
 
 
-def sanitizeOEMolecule(molecule):
+def sanitizeOEMolecule(molecule, aromaticity='OpenEye'):
     """
     This function checks if the molecule has coordinates,
     explicit hydrogens, aromaticity missing and not unique
@@ -446,15 +446,25 @@ def sanitizeOEMolecule(molecule):
     if not mol_copy.NumAtoms() == 1:  # Mono-atomic molecules are skipped
         if not oechem.OEGetDimensionFromCoords(mol_copy):
             raise ValueError("The molecule coordinates are set to zero")
+
     # Check if the molecule has hydrogens
     if not oechem.OEHasExplicitHydrogens(mol_copy):
         oechem.OEAddExplicitHydrogens(mol_copy)
+
     # Check if the molecule has assigned aromaticity
     if not mol_copy.HasPerceived(oechem.OEPerceived_Aromaticity):
-        # oechem.OEAssignAromaticFlags(mol_copy, oechem.OEAroModelOpenEye)
-        oechem.OEAssignAromaticFlags(mol_copy, oechem.OEAroModelMDL)
+        oechem.OEFindRingAtomsAndBonds(mol_copy)
+
+        if aromaticity == 'OpenEye':
+            oechem.OEAssignAromaticFlags(mol_copy, oechem.OEAroModelOpenEye)
+        elif aromaticity == 'MDL':
+            oechem.OEAssignAromaticFlags(mol_copy, oechem.OEAroModelMDL)
+        else:
+            raise ValueError("Aromaticity model supported OpenEye and MDL. Passed: {}".format(aromaticity))
+
     if not mol_copy.HasPerceived(oechem.OEPerceived_Chiral):
         oechem.OEPerceiveChiral(mol_copy)
+        oechem.OE3DToAtomStereo(mol_copy)
 
     # Check for any missing and not unique atom names.
     # If found reassign all of them as Tripos atom names
@@ -645,8 +655,8 @@ def select_oemol_atom_idx_by_language(system, mask=''):
         cat = oechem.OEMolComplexCategorizer()
         cat.AddLigandName(ligand_res_name)
         opt.SetCategorizer(cat)
-
         # Define the system fragments
+
         if not oechem.OEGetMolComplexFragments(frags, system, opt):
             raise ValueError('Unable to generate the system fragments')
 

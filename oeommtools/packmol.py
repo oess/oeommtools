@@ -28,6 +28,7 @@ import oeommtools
 from oeommtools import data_utils
 import random
 import string
+import math
 
 PACKAGE_DIR = os.path.dirname(os.path.dirname(oeommtools.__file__))
 
@@ -139,7 +140,6 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
 
     # Set Units
     density = density * unit.grams/unit.milliliter
-    padding_distance = padding_distance * unit.angstrom
     salt_concentration = salt_concentration * unit.millimolar
 
     solute_copy = oechem.OEMol(solute)
@@ -150,8 +150,14 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     # Calculate the Solute Bounding Box
     BB_solute = BoundingBox(solute_copy)
 
+    max_dist_solute = np.max(BB_solute[1] - BB_solute[0])
+
+    # Smaller solutes get a larger box due to GMX issues in NES
+    # padding_distance = padding_distance * unit.angstrom
+    padding_distance = (max_dist_solute * math.exp(-0.1 * max_dist_solute) + padding_distance)*unit.angstrom
+
     # Estimate of the box cube length
-    box_edge = 2.0*padding_distance + np.max(BB_solute[1] - BB_solute[0])*unit.angstrom
+    box_edge = 2.0 * padding_distance + max_dist_solute * unit.angstrom
 
     if geometry == 'box':
         # Box Volume

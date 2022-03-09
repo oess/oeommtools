@@ -152,9 +152,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
 
     max_dist_solute = np.max(BB_solute[1] - BB_solute[0])
 
-    # Smaller solutes get a larger box due to GMX issues in NES
-    # padding_distance = padding_distance * unit.angstrom
-    padding_distance = (max_dist_solute * math.exp(-0.1 * max_dist_solute) + padding_distance)*unit.angstrom
+    padding_distance = padding_distance * unit.angstrom
 
     # Estimate of the box cube length
     box_edge = 2.0 * padding_distance + max_dist_solute * unit.angstrom

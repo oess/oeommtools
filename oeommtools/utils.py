@@ -443,7 +443,7 @@ def sanitizeOEMolecule(molecule, aromaticity='OpenEye'):
     mol_copy = oechem.OEMol(molecule)
 
     # Check if the molecule has 3D coordinates
-    if not mol_copy.NumAtoms() == 1:  # Mono-atomic molecules are skipped
+    if mol_copy.NumAtoms() != 1:  # Mono-atomic molecules are skipped
         if not oechem.OEGetDimensionFromCoords(mol_copy):
             raise ValueError("The molecule coordinates are set to zero")
 
@@ -1032,7 +1032,9 @@ def split(complex, ligand_res_name='LIG'):
         cofactor_filter = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Cofactor)
         opt_other.SetLigandFilter(cofactor_filter)
 
-        metal_filter = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Metal)
+        mt_filter = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Metal)
+        not_cofactor_filter = oechem.OENotRoleSet(cofactor_filter)
+        metal_filter = oechem.OEAndRoleSet(mt_filter, not_cofactor_filter)
         opt_other.SetWaterFilter(metal_filter)
 
         # Set Category

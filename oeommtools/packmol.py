@@ -135,7 +135,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     if abs(sum(mol_fractions) - 1.0) > 0.001:
         oechem.OEThrow.Error("Error: Mole fractions do not sum up to 1.0")
 
-    if geometry not in ['box', 'sphere']:
+    if geometry not in ['box', 'sphere', 'rectangle']:
         raise ValueError("Error geometry: the supported geometries are box and sphere not {}".format(geometry))
 
     # Set Units
@@ -157,11 +157,19 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     # Estimate of the box cube length
     box_edge = 2.0 * padding_distance + max_dist_solute * unit.angstrom
 
+    # HJ 
+    xbox_edge = 2.0 * padding_distance + (BB_solute[1] - BB_solute[0])[0] * unit.angstrom
+    ybox_edge = 2.0 * padding_distance + (BB_solute[1] - BB_solute[0])[1] * unit.angstrom
+    zbox_edge = 2.0 * padding_distance + (BB_solute[1] - BB_solute[0])[2] * unit.angstrom
+
     if geometry == 'box':
         # Box Volume
         Volume = box_edge**3
     if geometry == 'sphere':
         Volume = (4.0/3.0) * 3.14159265 * (0.5*box_edge)**3
+    # HJ
+    if geometry == 'rectangle':
+        Volume = xbox_edge * ybox_edge * zbox_edge
 
     # Omega engine is used to generate conformations
     omegaOpts = oeomega.OEOmegaOptions()
@@ -399,7 +407,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     # Templates strings
     solute_template = """\n\n# Solute\nstructure {}\nnumber 1\nfixed 0. 0. 0. 0. 0. 0.\nresnumbers 1\nend structure"""
 
-    if geometry == 'box':
+    if geometry in ['box', 'rectangle']:
         solvent_template = """\nstructure {}\nnumber {}\ninside box {:0.3f} {:0.3f} {:0.3f} {:0.3f} {:0.3f} {:0.3f}\
         \nchain {}\nresnumbers 3\nend structure"""
     if geometry == 'sphere':
@@ -436,17 +444,25 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     # steric clashes at the box edges
     pbc_correction = 1.0 * unit.angstrom
 
-    xmin = xc - ((box_edge - pbc_correction) / 2.) / unit.angstrom
-    xmax = xc + ((box_edge - pbc_correction) / 2.) / unit.angstrom
-    ymin = yc - ((box_edge - pbc_correction) / 2.) / unit.angstrom
-    ymax = yc + ((box_edge - pbc_correction) / 2.) / unit.angstrom
-    zmin = zc - ((box_edge - pbc_correction) / 2.) / unit.angstrom
-    zmax = zc + ((box_edge - pbc_correction) / 2.) / unit.angstrom
+    if geometry == 'rectangle':
+        xmin = xc - ((xbox_edge - pbc_correction) / 2.) / unit.angstrom
+        xmax = xc + ((xbox_edge - pbc_correction) / 2.) / unit.angstrom
+        ymin = yc - ((ybox_edge - pbc_correction) / 2.) / unit.angstrom
+        ymax = yc + ((ybox_edge - pbc_correction) / 2.) / unit.angstrom
+        zmin = zc - ((zbox_edge - pbc_correction) / 2.) / unit.angstrom
+        zmax = zc + ((zbox_edge - pbc_correction) / 2.) / unit.angstrom
+    else:
+        xmin = xc - ((box_edge - pbc_correction) / 2.) / unit.angstrom
+        xmax = xc + ((box_edge - pbc_correction) / 2.) / unit.angstrom
+        ymin = yc - ((box_edge - pbc_correction) / 2.) / unit.angstrom
+        ymax = yc + ((box_edge - pbc_correction) / 2.) / unit.angstrom
+        zmin = zc - ((box_edge - pbc_correction) / 2.) / unit.angstrom
+        zmax = zc + ((box_edge - pbc_correction) / 2.) / unit.angstrom
 
     # Packmol setting for the solvent section
     body += '\n\n# Solvent'
     for i in range(0, len(solvent_smiles)):
-        if geometry == 'box':
+        if geometry in ['box', 'rectangle']:
             body += solvent_template.format(solvent_pdbs[i],
                                             n_monomers[i],
                                             xmin, ymin, zmin,
@@ -463,7 +479,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     if salt_concentration > 0.0 * unit.millimolar and n_salt >= 1:
         body += '\n\n# Salt'
         for i in range(0, len(salt_smiles)):
-            if geometry == 'box':
+            if geometry in ['box', 'rectangle']:
                 body += solvent_template.format(salt_pdbs[i],
                                                 int(round(n_salt)),
                                                 xmin, ymin, zmin,
@@ -480,7 +496,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
     if neutralize_solute and n_ions >= 1:
         body += '\n\n# Counter Ions'
         for i in range(0, len(ions_smiles)):
-            if geometry == 'box':
+            if geometry in ['box', 'rectangle']:
                 body += solvent_template.format(ions_smiles_pdbs[i],
                                                 n_ions,
                                                 xmin, ymin, zmin,
@@ -623,12 +639,17 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
         raise ValueError("Error: the computed density for the solute {} does not match the selected density {} vs {}"
                          .format(solute_copy.GetTitle(), density_mix, density))
 
-    if geometry == 'box':
+    if geometry in ['box', 'rectangle']:
         # Define the box vector and attached it as SD tag to the solvated system
         # with ID tag: 'box_vectors'
-        box_vectors = (Vec3(box_edge/unit.angstrom, 0.0, 0.0),
-                       Vec3(0.0, box_edge/unit.angstrom, 0.0),
-                       Vec3(0.0, 0.0, box_edge/unit.angstrom))*unit.angstrom
+        if geometry == 'box':
+            box_vectors = (Vec3(box_edge/unit.angstrom, 0.0, 0.0),
+                        Vec3(0.0, box_edge/unit.angstrom, 0.0),
+                        Vec3(0.0, 0.0, box_edge/unit.angstrom))*unit.angstrom
+        if geometry == 'rectangle':
+            box_vectors = (Vec3(xbox_edge/unit.angstrom, 0.0, 0.0),
+                        Vec3(0.0, ybox_edge/unit.angstrom, 0.0),
+                        Vec3(0.0, 0.0, zbox_edge/unit.angstrom))*unit.angstrom
 
         box_vectors = data_utils.encodePyObj(box_vectors)
         solvated_system.SetData(oechem.OEGetTag('box_vectors'), box_vectors)

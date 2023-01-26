@@ -509,6 +509,17 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
                                                 0.5 * box_edge / unit.angstrom,
                                                 "*")
 
+    # Packmol setting for random seed
+    # note use of non-standard name kargs in place of kwargs
+    if "random_seed" in kargs:
+        random_seed = kargs["random_seed"]
+        body += '\n\n# Seed for random number generator'
+        body += f'\nseed {random_seed}'
+    else:
+        # Packmol uses a default random seed of 1234567
+        # the algorithm is deterministic given constant inputs and constant random seed
+        pass
+
     # Packmol configuration file
     packmol_filename = os.path.basename(tempfile.mktemp(suffix='.inp'))
 

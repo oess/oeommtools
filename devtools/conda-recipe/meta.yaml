@@ -14,7 +14,6 @@ build:
 requirements:
   build:
     - python
-    - pytest
     - setuptools
     - numpy
     - openmm
@@ -23,8 +22,6 @@ requirements:
     - parmed
   run:
     - python
-    - pytest
-    - setuptools
     - numpy
     - openmm
     - pyparsing

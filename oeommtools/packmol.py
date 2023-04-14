@@ -38,7 +38,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
               solvents='tip3p', molar_fractions='1.0',
               geometry='box', close_solvent=True,
               salt='[Na+], [Cl-]', salt_concentration=0.0,
-              neutralize_solute=True, verbose=False, return_components=False, **kargs):
+              neutralize_solute=True, verbose=False, return_components=False, **kwargs):
     """
     This function solvates the passed solute in a cubic box or a sphere by using Packmol. Packmol
     creates an initial point for molecular dynamics simulations by packing molecule in defined regions
@@ -510,9 +510,8 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
                                                 "*")
 
     # Packmol setting for random seed
-    # note use of non-standard name kargs in place of kwargs
-    if "random_seed" in kargs:
-        random_seed = kargs["random_seed"]
+    if "random_seed" in kwargs:
+        random_seed = kwargs["random_seed"]
         body += '\n\n# Seed for random number generator'
         body += f'\nseed {random_seed}'
     else:

@@ -38,7 +38,8 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
               solvents='tip3p', molar_fractions='1.0',
               geometry='box', close_solvent=True,
               salt='[Na+], [Cl-]', salt_concentration=0.0,
-              neutralize_solute=True, verbose=False, return_components=False, **kwargs):
+              neutralize_solute=True, verbose=False, return_components=False, 
+              random_seed=None, **kwargs):
     """
     This function solvates the passed solute in a cubic box or a sphere by using Packmol. Packmol
     creates an initial point for molecular dynamics simulations by packing molecule in defined regions
@@ -80,6 +81,9 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
         If True verbose mode is enabled
     return_components: Bool
         If True the added solvent molecule components are also returned as OEMols
+    random_seed: integer
+        If not None the random_seed will be passed as the argument to 'seed' in 
+        the Packmol configuration file
 
     Return:
     -------
@@ -510,8 +514,7 @@ def oesolvate(solute, density=1.0, padding_distance=10.0,
                                                 "*")
 
     # Packmol setting for random seed
-    if "random_seed" in kwargs:
-        random_seed = kwargs["random_seed"]
+    if random_seed is not None:
         body += '\n\n# Seed for random number generator'
         body += f'\nseed {random_seed}'
     else:

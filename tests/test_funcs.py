@@ -17,7 +17,10 @@
 
 import unittest
 from simtk import unit
-from simtk.openmm import app
+try:
+    from simtk.openmm import app
+except ImportError:
+    from openmm import app
 from openeye import oechem
 from oeommtools import utils
 from oeommtools import data_utils

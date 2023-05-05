@@ -16,8 +16,12 @@
 # or its use.
 
 from openeye import oechem
-from simtk.openmm import app
-from simtk.openmm import Vec3
+try:
+    from simtk.openmm import app
+    from simtk.openmm import Vec3
+except ImportError:
+    from openmm import app
+    from openmm import Vec3
 from simtk import unit
 import itertools
 import pyparsing as pyp
@@ -855,6 +859,51 @@ def select_oemol_atom_idx_by_language(system, mask=''):
 
             return atom_set_around
 
+        def around2(dist, ls):
+            """
+            This function select atom not far than the threshold distance from
+            the current selection. The threshold distance is in Angstrom
+
+            selection can be:
+            mask = '5.0 around2 ligand'
+            """
+            # at = system.GetAtom(oechem.OEHasAtomIdx(idx))
+
+            # Atom set selection
+            atom_set_around = set()
+
+            # Create a OE bit vector mask for each atoms
+            bv_around = oechem.OEBitVector(system.GetMaxAtomIdx())
+
+            # Set the mask atom
+            for at in system.GetAtoms():
+                if at.GetIdx() in ls:
+                    bv_around.SetBitOn(at.GetIdx())
+
+            # Predicate
+            pred = oechem.OEAtomIdxSelected(bv_around)
+
+            # Create the system molecule based on the atom mask
+            molecules = oechem.OEMol()
+            oechem.OESubsetMol(molecules, system, pred)
+
+            # Create the Nearest neighbours
+            nn = oechem.OENearestNbrs(system, float(dist))
+
+            # for nbrs in nn.GetNbrs(molecules):
+            #     for atom in oechem.OEGetResidueAtoms(nbrs.GetBgn()):
+            #         if atom.GetIdx() in ls:
+            #             continue
+            #         atom_set_around.add(atom.GetIdx())
+
+            for nbrs in nn.GetNbrs(molecules):
+                atom = nbrs.GetBgn()
+                if atom.GetIdx() in ls:
+                    continue
+                atom_set_around.add(atom.GetIdx())
+
+            return atom_set_around
+
         # Start Body of the selection function by language
 
         # Terminal Literal return the related set
@@ -878,6 +927,8 @@ def select_oemol_atom_idx_by_language(system, mask=''):
                 return build_set(ls[0], dsets) - build_set(ls[2], dsets)
             elif ls[1] == 'around':  # Around case
                 return around(ls[0], build_set(ls[2], dsets))
+            elif ls[1] == 'around2':  # HJ: strict around case
+                return around2(ls[0], build_set(ls[2], dsets))
             else:
                 return residues(ls[1:])  # Resid case with one or two indexes
         else:
@@ -933,7 +984,8 @@ def select_oemol_atom_idx_by_language(system, mask=''):
                                         (pyp.Literal("and"), 2, pyp.opAssoc.LEFT, makeLRlike(2)),
                                         (pyp.Literal("or"), 2, pyp.opAssoc.LEFT, makeLRlike(2)),
                                         (pyp.Literal("diff"), 2, pyp.opAssoc.LEFT, makeLRlike(2)),
-                                        (real + pyp.Literal("around"), 1, pyp.opAssoc.RIGHT, makeLRlike(2))
+                                        (real + pyp.Literal("around"), 1, pyp.opAssoc.RIGHT, makeLRlike(2)),
+                                        (real + pyp.Literal("around2"), 1, pyp.opAssoc.RIGHT, makeLRlike(2))
                                     ])
     # Parse the input string
     try:

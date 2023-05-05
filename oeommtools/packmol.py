@@ -20,7 +20,10 @@ from openeye import oeomega
 import numpy as np
 import shutil
 from simtk import unit
-from simtk.openmm import Vec3
+try:
+    from simtk.openmm import Vec3
+except ImportError:
+    from openmm import Vec3
 import subprocess
 import tempfile
 import os

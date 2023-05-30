@@ -564,7 +564,8 @@ def select_oemol_atom_idx_by_language(system, mask=''):
         (https://en.wikipedia.org/wiki/Backus–Naur_form) is defined by the python
         module pyparsing.
         The defined grammar tokens are: "ligand", "protein", "ca_protein" ,"water",
-        "ions", "excipients" and "resid chain1:res_idx1 chain2:res_idx2 ... res_idxn"
+        "ions", "excipients", "cofactors", "lipids", "metals",
+        and "resid chain1:res_idx1 chain2:res_idx2 ... res_idxn"
         that respectively define the ligand, the protein, carbon alpha protein atoms,
         water molecules, ions, excipients (not protein, ligand, water or ions) and
         residue numbers. The atom selection can be refined by using the following
@@ -620,7 +621,10 @@ def select_oemol_atom_idx_by_language(system, mask=''):
                 water,
                 ions,
                 excipients,
-                system
+                system,
+                cofactors,
+                lipids,
+                metals
         """
 
         # Define Empty sets
@@ -663,7 +667,7 @@ def select_oemol_atom_idx_by_language(system, mask=''):
 
         if not oechem.OEGetMolComplexFragments(frags, system, opt):
             raise ValueError('Unable to generate the system fragments')
-
+        
         # Set empty OEMol containers
         prot = oechem.OEMol()
         lig = oechem.OEMol()
@@ -722,14 +726,77 @@ def select_oemol_atom_idx_by_language(system, mask=''):
                 excp_set.add(sys_idx)
                 # print(sys_idx, '->', at_idx)
 
-        # Create the mono-atomic ions set
+        # HJ: re-define the split options to extract cofactors, lipids and metals
+        opt_other = oechem.OESplitMolComplexOptions()
+
+        lipid_filter = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Lipid)
+        opt_other.SetProteinFilter(lipid_filter)
+
+        cofactor_filter = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Cofactor)
+        opt_other.SetLigandFilter(cofactor_filter)
+
+        mt_filter = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Metal)
+        not_cofactor_filter = oechem.OENotRoleSet(cofactor_filter)
+        metal_filter = oechem.OEAndRoleSet(mt_filter, not_cofactor_filter)
+        opt_other.SetWaterFilter(metal_filter)
+
+        # Set Category
+        cat_other = oechem.OEMolComplexCategorizer()
+        opt_other.SetCategorizer(cat_other)
+
+        if not oechem.OEGetMolComplexFragments(frags, system, opt_other):
+            raise ValueError('Unable to generate the system fragments')
+
+        cofac_set = set()
+        lipid_set = set()
+        metal_set = set()
+        cofac = oechem.OEMol()
+        lipid = oechem.OEMol()
+        metal = oechem.OEMol()
+
+        # Split cofactors from the system
+        atommap = oechem.OEAtomArray(system.GetMaxAtomIdx())
+        if not oechem.OECombineMolComplexFragments(cofac, frags, opt_other, opt_other.GetLigandFilter(), atommap):
+            raise ValueError('Unable to split the Cofactors')
+
+        for sys_at in system.GetAtoms():
+            sys_idx = sys_at.GetIdx()
+            at_idx = atommap[sys_idx]
+            if at_idx:
+                cofac_set.add(sys_idx)
+
+        # Split lipids from the system
+        atommap = oechem.OEAtomArray(system.GetMaxAtomIdx())
+        if not oechem.OECombineMolComplexFragments(lipid, frags, opt_other, opt_other.GetProteinFilter(), atommap):
+            raise ValueError('Unable to split the Lipids')
+
+        for sys_at in system.GetAtoms():
+            sys_idx = sys_at.GetIdx()
+            at_idx = atommap[sys_idx]
+            if at_idx:
+                lipid_set.add(sys_idx)
+
+        # Split metals from the system
+        atommap = oechem.OEAtomArray(system.GetMaxAtomIdx())
+        if not oechem.OECombineMolComplexFragments(metal, frags, opt_other, opt_other.GetWaterFilter(), atommap):
+            raise ValueError('Unable to split the Metals')
+
+        for sys_at in system.GetAtoms():
+            sys_idx = sys_at.GetIdx()
+            at_idx = atommap[sys_idx]
+            if at_idx:
+                metal_set.add(sys_idx)
+
+        # Create a non-cofactor mono-atomic ion set
         for exc_idx in excp_set:
             atom = system.GetAtom(oechem.OEHasAtomIdx(exc_idx))
             if atom.GetDegree() == 0:
-                ion_set.add(exc_idx)
+                if atom.GetIdx() not in cofac_set: 
+                    ion_set.add(exc_idx)
 
-        # Create the excipients set which are not protein, ligand, waters or ions
-        excipients_set = excp_set - ion_set
+        # Create the excipients set which are not protein, ligand, waters, cofactors, lipids, metals or ions
+        non_excipients_set = cofac_set | lipid_set | metal_set | ion_set
+        excipients_set = excp_set - non_excipients_set
 
         # Create the system set
         system_set = prot_set | lig_set | excp_set | wat_set
@@ -738,9 +805,10 @@ def select_oemol_atom_idx_by_language(system, mask=''):
             raise ValueError("The total system atom number {} is different "
                              "from its set representation {}".format(system.NumAtoms(), system_set))
 
-        # The dictionary is used to link the token keywords to the created molecule sets
+        # The dictionary is used to link the token keywords to the created molecule sets        
         dic_set = {'ligand': lig_set, 'protein': prot_set, 'ca_protein': ca_prot_set,
-                   'water': wat_set,  'ions': ion_set,     'excipients': excipients_set, 'system': system_set}
+                   'water': wat_set,  'ions': ion_set, 'excipients': excipients_set, 'system': system_set,
+                   'cofactors': cofac_set, 'lipids': lipid_set, 'metals': metal_set}
 
         return dic_set
 
@@ -973,7 +1041,8 @@ def select_oemol_atom_idx_by_language(system, mask=''):
     # Define the tokens for the BNF grammar
     operand = pyp.Literal("protein") | pyp.Literal("ca_protein") | \
               pyp.Literal("ligand") | pyp.Literal("water") | \
-              pyp.Literal("ions") | pyp.Literal("excipients") | resid
+              pyp.Literal("ions") | pyp.Literal("excipients") | resid | \
+              pyp.Literal("cofactors") | pyp.Literal("lipids") | pyp.Literal("metals") 
 
     # BNF Grammar definition with parseAction makeLRlike
     expr = pyp.operatorPrecedence(operand,
@@ -1030,6 +1099,8 @@ def split(complex, ligand_res_name='LIG'):
         The metals
     excipients : oechem.OEMol
         The excipients
+    counter_ions : oechem.OEMol
+        The counter ions
     """
 
     # Set empty molecule containers
@@ -1071,9 +1142,12 @@ def split(complex, ligand_res_name='LIG'):
     cofactors = oechem.OEMol()
     lipids = oechem.OEMol()
     metals = oechem.OEMol()
+    other2 = oechem.OEMol()
+
+    counter_ions = oechem.OEMol()
     excipients = oechem.OEMol()
 
-    # Splitting the subsystem
+    # Splitting the subsystem to extract ofactors, lipids, and metals
     if other.NumAtoms():
 
         opt_other = oechem.OESplitMolComplexOptions()
@@ -1093,7 +1167,32 @@ def split(complex, ligand_res_name='LIG'):
         cat_other = oechem.OEMolComplexCategorizer()
         opt_other.SetCategorizer(cat_other)
 
-        if not oechem.OESplitMolComplex(cofactors, lipids, metals, excipients, other, opt_other):
+        if not oechem.OESplitMolComplex(cofactors, lipids, metals, other2, other, opt_other):
             raise ValueError('Unable to split the Subcategories')
+        
+    # HJ: Second splitting of the sub-subsystem to extract counter_ions, excipients
+    if other2.NumAtoms():
+        cofactors_tmp = oechem.OEMol()
+        lipids_tmp = oechem.OEMol()
+            
+        opt_other = oechem.OESplitMolComplexOptions()
 
+        lipid_filter = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Lipid)
+        opt_other.SetProteinFilter(lipid_filter)
+
+        cofactor_filter = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_Cofactor)
+        opt_other.SetLigandFilter(cofactor_filter)
+
+        ion_filter = oechem.OEMolComplexFilterFactory(oechem.OEMolComplexFilterCategory_CounterIon)
+        not_cofactor_filter = oechem.OENotRoleSet(cofactor_filter)
+        conterion_filer = oechem.OEAndRoleSet(ion_filter, not_cofactor_filter)
+        opt_other.SetWaterFilter(conterion_filer)
+
+        # Set Category
+        cat_other = oechem.OEMolComplexCategorizer()
+        opt_other.SetCategorizer(cat_other)
+
+        if not oechem.OESplitMolComplex(cofactors_tmp, lipids_tmp, counter_ions, excipients, other2, opt_other):
+            raise ValueError('Unable to split the Subcategories')
+        
     return protein, ligand, water, cofactors, lipids, metals, excipients

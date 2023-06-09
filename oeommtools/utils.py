@@ -1195,4 +1195,4 @@ def split(complex, ligand_res_name='LIG'):
         if not oechem.OESplitMolComplex(cofactors_tmp, lipids_tmp, counter_ions, excipients, other2, opt_other):
             raise ValueError('Unable to split the Subcategories')
         
-    return protein, ligand, water, cofactors, lipids, metals, excipients
+    return protein, ligand, water, cofactors, lipids, metals, counter_ions, excipients

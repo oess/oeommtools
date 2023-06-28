@@ -17,5 +17,5 @@
 
 __author__ = 'Gaetano Calabro'
 __email__ = 'gcalabro@eyesopen.com'
-__version__ = '1.2.0b3'
+__version__ = '1.2.0'
 
